@@ -33,9 +33,44 @@ class ApiClient {
     }
     if (!res.ok) {
       const body = await res.text();
+      // Try to extract a JSON error detail; fall back to a clean message
+      try {
+        const json = JSON.parse(body);
+        throw new Error(json.detail || json.message || `HTTP ${res.status}`);
+      } catch (e) {
+        if (e instanceof Error && e.message !== `HTTP ${res.status}`) throw e;
+      }
+      // If body is HTML (e.g. HF Spaces 500 page), show a user-friendly message
+      if (body.includes("<!DOCTYPE") || body.includes("<html")) {
+        throw new Error(
+          res.status >= 500
+            ? "Backend is starting up — please wait a moment and try again"
+            : `Request failed (HTTP ${res.status})`
+        );
+      }
       throw new Error(body || `HTTP ${res.status}`);
     }
     return res.json();
+  }
+
+  /**
+   * Fetch with retry for 5xx errors (handles HF Spaces cold starts).
+   * Retries up to `retries` times with exponential backoff.
+   */
+  private async fetchWithRetry(
+    url: string,
+    init: RequestInit,
+    retries = 2,
+    backoffMs = 3000,
+  ): Promise<Response> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const res = await fetch(url, init);
+      if (res.status < 500 || attempt === retries) return res;
+      // Wait before retrying (Space may be waking up)
+      await new Promise((r) => setTimeout(r, backoffMs * (attempt + 1)));
+    }
+    // Unreachable, but TypeScript needs it
+    return fetch(url, init);
   }
 
   async get<T>(path: string, params?: Record<string, string>): Promise<T> {
@@ -48,12 +83,12 @@ class ApiClient {
       const qs = sp.toString();
       if (qs) url += `?${qs}`;
     }
-    const res = await fetch(url, { headers: this.getHeaders() });
+    const res = await this.fetchWithRetry(url, { headers: this.getHeaders() });
     return this.handleResponse<T>(res);
   }
 
   async post<T>(path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await this.fetchWithRetry(`${this.baseUrl}${path}`, {
       method: "POST",
       headers: this.getHeaders(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
