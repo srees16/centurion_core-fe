@@ -1,6 +1,8 @@
-// Use relative paths in the browser (requests go through Next.js proxy rewrite)
-// Use the full backend URL for server-side or SSE/WebSocket connections
-const API_BASE = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001");
+// In production, NEXT_PUBLIC_API_URL points to the HF Spaces backend directly.
+// This avoids Vercel's edge rewrite proxy, which has strict timeouts that cause
+// ROUTER_EXTERNAL_TARGET_ERROR when the backend is slow (cold start, latency).
+// Falls back to relative URLs (Next.js rewrite proxy) if unset.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 class ApiClient {
   private baseUrl: string;
