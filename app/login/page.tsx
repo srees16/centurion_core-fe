@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("Signing in...");
   const { login, isAuthenticated, checkAuth } = useAuthStore();
   const router = useRouter();
 
@@ -29,12 +30,18 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
+    setStatusMsg("Signing in...");
+    // Show progressive feedback if backend is slow (cold start)
+    const t1 = setTimeout(() => setStatusMsg("Connecting to backend..."), 3000);
+    const t2 = setTimeout(() => setStatusMsg("Backend is waking up — hang tight..."), 8000);
     try {
       await login(username, password);
       router.replace("/ind-stocks/fly-kite");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
       setIsSubmitting(false);
     }
   };
@@ -83,7 +90,7 @@ export default function LoginPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isSubmitting || !username || !password}>
-              {isSubmitting ? "Signing in…" : <><LogIn className="mr-2 h-4 w-4" /> Sign In</>}
+              {isSubmitting ? statusMsg : <><LogIn className="mr-2 h-4 w-4" /> Sign In</>}
             </Button>
           </form>
 

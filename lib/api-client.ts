@@ -61,7 +61,7 @@ class ApiClient {
     url: string,
     init: RequestInit,
     retries = 2,
-    backoffMs = 3000,
+    backoffMs = 1500,
   ): Promise<Response> {
     for (let attempt = 0; attempt <= retries; attempt++) {
       const res = await fetch(url, init);
