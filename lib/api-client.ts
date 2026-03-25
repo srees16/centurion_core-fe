@@ -100,9 +100,9 @@ class ApiClient {
    * POST directly to the backend (bypasses Next.js rewrite proxy).
    * Use for long-running endpoints that exceed the proxy timeout.
    */
-  async postDirect<T>(path: string, body?: unknown, timeoutMs = 360_000): Promise<T> {
+  async postDirect<T>(path: string, body?: unknown, timeoutMs = 600_000): Promise<T> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort("Request timed out"), timeoutMs);
     try {
       const res = await fetch(`${this.backendUrl}${path}`, {
         method: "POST",
@@ -111,6 +111,11 @@ class ApiClient {
         signal: controller.signal,
       });
       return this.handleResponse<T>(res);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s — try fewer tickers or skip layers`);
+      }
+      throw err;
     } finally {
       clearTimeout(timer);
     }
