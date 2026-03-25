@@ -155,7 +155,7 @@ export interface VerdictResult {
   core_score: number;
   strategy_score: number;
   ml_score: number;
-  robustness_score: number;
+  robustness_score: number; // embedded in strategy — kept for backward compat
   weighted_score: number;
   verdict: DecisionTag;
   layer_details: Record<string, unknown>;
@@ -171,8 +171,7 @@ export interface VerdictRequest {
   weights: {
     core: number;
     strategy: number;
-    ml_features: number;
-    robustness: number;
+    ml_features?: number;
   };
   batch_size?: number;
 }

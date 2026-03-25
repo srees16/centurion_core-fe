@@ -25,8 +25,8 @@ export default function INDVerdictPage() {
       tickers,
       market: "IND",
       date_range: ["", ""],
-      skip_layers: [],
-      weights: { core: 0.3, strategy: 0.3, ml_features: 0.2, robustness: 0.2 },
+      skip_layers: ["ml_features"],
+      weights: { core: 0.45, strategy: 0.55 },
     });
   };
 
@@ -83,9 +83,8 @@ export default function INDVerdictPage() {
                         <VerdictRadarChart
                           data={[
                             { layer: "Core", score: r.core_score },
-                            { layer: "Strategy", score: r.strategy_score },
+                            { layer: "Strategy + Robustness", score: r.strategy_score },
                             { layer: "ML", score: r.ml_score },
-                            { layer: "Robustness", score: r.robustness_score },
                           ]}
                         />
                       </TabsContent>

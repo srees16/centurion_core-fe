@@ -16,7 +16,8 @@ export function useAnalysis(market: Market) {
 
   const runMutation = useMutation({
     mutationFn: (params: RunAnalysisParams) =>
-      api.post<AnalysisResponse>("/api/v1/analysis/run", params),
+      api.postDirect<AnalysisResponse>("/api/v1/analysis/run", params),
+    retry: false,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["analysis", market] });
       qc.invalidateQueries({ queryKey: ["history", market] });
