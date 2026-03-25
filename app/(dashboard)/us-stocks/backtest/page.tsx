@@ -30,6 +30,9 @@ export default function USBacktestPage() {
     });
   };
 
+  const perTicker = result?.per_ticker ?? {};
+  const tickerKeys = Object.keys(perTicker);
+
   return (
     <div className="space-y-6">
       <RibbonVixBar symbols={NASDAQ_50_TICKERS} market="US" />
@@ -57,14 +60,53 @@ export default function USBacktestPage() {
           {result && (
             <>
               <MetricsGrid>
-                <MetricCard label="Total Return" value={formatPct(result.total_return)} color={result.total_return >= 0 ? "text-green-500" : "text-red-500"} />
-                <MetricCard label="Sharpe Ratio" value={result.sharpe_ratio.toFixed(2)} />
-                <MetricCard label="Sortino Ratio" value={result.sortino_ratio.toFixed(2)} />
+                <MetricCard label={tickerKeys.length > 1 ? "Avg Total Return" : "Total Return"} value={formatPct(result.total_return)} color={result.total_return >= 0 ? "text-green-500" : "text-red-500"} />
+                <MetricCard label={tickerKeys.length > 1 ? "Avg Sharpe Ratio" : "Sharpe Ratio"} value={result.sharpe_ratio.toFixed(2)} />
+                <MetricCard label={tickerKeys.length > 1 ? "Avg Sortino Ratio" : "Sortino Ratio"} value={result.sortino_ratio.toFixed(2)} />
                 <MetricCard label="Max Drawdown" value={formatPct(result.max_drawdown)} color="text-red-500" />
                 <MetricCard label="Win Rate" value={formatPct(result.win_rate)} />
                 <MetricCard label="Total Trades" value={result.total_trades} />
                 <MetricCard label="Final Value" value={formatCurrency(result.final_value)} />
               </MetricsGrid>
+
+              {tickerKeys.length > 1 && (
+                <div className="content-panel p-4">
+                  <h4 className="text-sm font-semibold mb-3">Per-Ticker Breakdown</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left text-muted-foreground">
+                          <th className="py-2 pr-4 font-medium">Ticker</th>
+                          <th className="py-2 pr-4 font-medium text-right">Return</th>
+                          <th className="py-2 pr-4 font-medium text-right">Sharpe</th>
+                          <th className="py-2 pr-4 font-medium text-right">Sortino</th>
+                          <th className="py-2 pr-4 font-medium text-right">Max DD</th>
+                          <th className="py-2 pr-4 font-medium text-right">Win Rate</th>
+                          <th className="py-2 pr-4 font-medium text-right">Trades</th>
+                          <th className="py-2 font-medium text-right">Final Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tickerKeys.map((ticker) => {
+                          const tm = perTicker[ticker];
+                          return (
+                            <tr key={ticker} className="border-b last:border-0">
+                              <td className="py-2 pr-4 font-mono font-medium">{ticker}</td>
+                              <td className={`py-2 pr-4 text-right ${tm.total_return >= 0 ? "text-green-500" : "text-red-500"}`}>{formatPct(tm.total_return)}</td>
+                              <td className="py-2 pr-4 text-right">{tm.sharpe_ratio.toFixed(2)}</td>
+                              <td className="py-2 pr-4 text-right">{tm.sortino_ratio.toFixed(2)}</td>
+                              <td className="py-2 pr-4 text-right text-red-500">{formatPct(tm.max_drawdown)}</td>
+                              <td className="py-2 pr-4 text-right">{formatPct(tm.win_rate)}</td>
+                              <td className="py-2 pr-4 text-right">{tm.total_trades}</td>
+                              <td className="py-2 text-right">{formatCurrency(tm.final_value)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {result.equity_curve.length > 0 && (
                 <div className="content-panel p-4">
