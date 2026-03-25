@@ -126,7 +126,18 @@ export interface BacktestResult {
   signals: BacktestSignal[];
   equity_curve: EquityPoint[];
   metrics: Record<string, unknown>;
+  per_ticker?: Record<string, TickerMetrics>;
   created_at: string;
+}
+
+export interface TickerMetrics {
+  total_return: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  max_drawdown: number;
+  total_trades: number;
+  win_rate: number;
+  final_value: number;
 }
 
 export interface ChartData {
