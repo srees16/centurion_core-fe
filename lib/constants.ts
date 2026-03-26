@@ -191,7 +191,7 @@ export const OUTPUT_FORMATS = [
 export const INDEX_OPTIONS = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"];
 
 // ─── Verdict Layers ──────────────────────────────────────────────────────
-export const VERDICT_LAYERS = ["core", "strategy", "ml_features", "robustness"];
+export const VERDICT_LAYERS = ["core", "strategy", "ml_features"];
 
 // ─── Stop-Loss Methods ──────────────────────────────────────────────────
 export const SL_METHODS = [

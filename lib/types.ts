@@ -126,7 +126,18 @@ export interface BacktestResult {
   signals: BacktestSignal[];
   equity_curve: EquityPoint[];
   metrics: Record<string, unknown>;
+  per_ticker?: Record<string, TickerMetrics>;
   created_at: string;
+}
+
+export interface TickerMetrics {
+  total_return: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  max_drawdown: number;
+  total_trades: number;
+  win_rate: number;
+  final_value: number;
 }
 
 export interface ChartData {
@@ -155,7 +166,7 @@ export interface VerdictResult {
   core_score: number;
   strategy_score: number;
   ml_score: number;
-  robustness_score: number;
+  robustness_score: number; // embedded in strategy — kept for backward compat
   weighted_score: number;
   verdict: DecisionTag;
   layer_details: Record<string, unknown>;
@@ -171,8 +182,7 @@ export interface VerdictRequest {
   weights: {
     core: number;
     strategy: number;
-    ml_features: number;
-    robustness: number;
+    ml_features?: number;
   };
   batch_size?: number;
 }
