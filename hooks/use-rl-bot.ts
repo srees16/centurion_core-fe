@@ -8,6 +8,7 @@ import type {
   RLModel,
   RLUploadResult,
   RLUploadedFile,
+  PortfolioAnalysisResponse,
 } from "@/lib/types";
 
 export function useRLTrain() {
@@ -60,5 +61,14 @@ export function useRLUploads() {
       const res = await api.get<{ files: RLUploadedFile[] }>("/api/v1/rl-bot/uploads");
       return res.files;
     },
+  });
+}
+
+export function usePortfolioAnalysis() {
+  return useQuery({
+    queryKey: ["rl-portfolio-analysis"],
+    queryFn: () =>
+      api.get<PortfolioAnalysisResponse>("/api/v1/rl-bot/portfolio-analysis"),
+    staleTime: 5 * 60 * 1000,
   });
 }
