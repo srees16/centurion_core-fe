@@ -37,7 +37,7 @@ export const DEFAULT_US_TICKERS = [
 ];
 
 export const DEFAULT_IND_TICKERS = [
-  "RELIANCE", "TCS", "INFY", "HDFCBANK",
+  "SBIN", "LT", "MARUTI", "TITAN",
 ];
 
 export const DEFAULT_FML_TICKERS = [
@@ -155,6 +155,7 @@ export const TTS_CATEGORIES = [
 export const APP_MODULES = [
   { key: "us-stocks", label: "US Stocks", href: "/us-stocks" },
   { key: "ind-stocks", label: "Ind Stocks", href: "/ind-stocks" },
+  { key: "rl-bot", label: "RL Bot", href: "/rl-bot" },
   { key: "financial-ml", label: "Financial ML", href: "/financial-ml" },
   { key: "test-tune", label: "Test & Tune", href: "/test-tune" },
   { key: "crypto", label: "Crypto", href: "/crypto" },
