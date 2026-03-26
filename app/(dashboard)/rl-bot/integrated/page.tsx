@@ -42,7 +42,9 @@ const VERDICT_ICONS: Record<DecisionTag, React.ReactNode> = {
 export default function IntegratedRLPage() {
   const [market, setMarket] = useState<Market>("US");
   const [tickerMode, setTickerMode] = useState<TickerMode>("manual");
-  const [manualTickers, setManualTickers] = useState("SBIN, LT, MARUTI, TITAN");
+  const [manualTickers, setManualTickers] = useState(
+    market === "US" ? "MSFT, GOOG, AMD, AMZN" : "SBIN, LT, MARUTI, TITAN"
+  );
   const [csvTickers, setCsvTickers] = useState<string[]>([]);
 
   // Layer weights
@@ -144,7 +146,10 @@ export default function IntegratedRLPage() {
               {(["US", "IND"] as const).map((m) => (
                 <button
                   key={m}
-                  onClick={() => setMarket(m)}
+                  onClick={() => {
+                    setMarket(m);
+                    setManualTickers(m === "US" ? "MSFT, GOOG, AMD, AMZN" : "SBIN, LT, MARUTI, TITAN");
+                  }}
                   className={cn(
                     "flex-1 px-2 py-1.5 text-xs rounded border transition-colors",
                     market === m
@@ -182,7 +187,7 @@ export default function IntegratedRLPage() {
             </div>
             {tickerMode === "manual" && (
               <Input
-                placeholder={market === "US" ? "AAPL, MSFT, GOOG" : "SBIN, LT, MARUTI, TITAN"}
+                placeholder={market === "US" ? "MSFT, GOOG, AMD, AMZN" : "SBIN, LT, MARUTI, TITAN"}
                 value={manualTickers}
                 onChange={(e) => setManualTickers(e.target.value)}
                 className="text-xs"
