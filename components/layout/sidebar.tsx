@@ -6,13 +6,14 @@ import { cn } from "@/lib/utils";
 import { APP_MODULES, US_SUB_PAGES, IND_SUB_PAGES } from "@/lib/constants";
 import {
   BarChart3, Globe, Brain, FlaskConical, Bitcoin, MessageSquare,
-  ChevronDown, ChevronRight, Menu, X,
+  ChevronDown, ChevronRight, Menu, X, Bot,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const MODULE_ICONS: Record<string, React.ReactNode> = {
   "us-stocks": <BarChart3 className="h-4 w-4" />,
   "ind-stocks": <Globe className="h-4 w-4" />,
+  "rl-bot": <Bot className="h-4 w-4" />,
   "financial-ml": <Brain className="h-4 w-4" />,
   "test-tune": <FlaskConical className="h-4 w-4" />,
   "crypto": <Bitcoin className="h-4 w-4" />,
@@ -22,6 +23,11 @@ const MODULE_ICONS: Record<string, React.ReactNode> = {
 function getSubPages(key: string) {
   if (key === "us-stocks") return US_SUB_PAGES;
   if (key === "ind-stocks") return IND_SUB_PAGES;
+  if (key === "rl-bot")
+    return [
+      { key: "main", label: "Train & Evaluate", href: "/rl-bot" },
+      { key: "integrated", label: "Integrated RL", href: "/rl-bot/integrated" },
+    ];
   if (key === "financial-ml")
     return [
       { key: "main", label: "Chapters", href: "/financial-ml" },

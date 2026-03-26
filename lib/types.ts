@@ -166,6 +166,7 @@ export interface VerdictResult {
   core_score: number;
   strategy_score: number;
   ml_score: number;
+  rl_score: number;
   robustness_score: number; // embedded in strategy — kept for backward compat
   weighted_score: number;
   verdict: DecisionTag;
@@ -183,6 +184,7 @@ export interface VerdictRequest {
     core: number;
     strategy: number;
     ml_features?: number;
+    rl_bot?: number;
   };
   batch_size?: number;
 }
@@ -457,4 +459,93 @@ export interface LoginResponse {
   access_token: string;
   refresh_token: string;
   user: AuthUser;
+}
+
+// ─── RL Bot ───────────────────────────────────────────────────────────────
+export type RLAlgorithm = "PPO" | "DQN" | "A2C";
+export type RLAction = "BUY" | "SELL" | "HOLD";
+
+export interface RLTrainConfig {
+  tickers: string[];
+  algorithm: RLAlgorithm;
+  reward_type: "pnl" | "sharpe" | "hybrid";
+  total_timesteps: number;
+  lookback: number;
+  train_days: number;
+  test_days: number;
+  folds: number;
+  initial_capital: number;
+}
+
+export interface RLFoldResult {
+  fold: number;
+  train_period: string;
+  test_period: string;
+  return_pct: number;
+  sharpe: number;
+  max_dd_pct: number;
+  trades: number;
+  win_rate: number;
+}
+
+export interface RLTickerResult {
+  algorithm: string;
+  model_path: string;
+  avg_test_return: number;
+  avg_test_sharpe: number;
+  avg_test_drawdown: number;
+  folds: RLFoldResult[];
+}
+
+export interface RLTrainResponse {
+  results: Record<string, RLTickerResult>;
+}
+
+export interface RLEvalMetrics {
+  ticker: string;
+  algorithm: string;
+  total_return_pct: number;
+  cagr_pct: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  max_drawdown_pct: number;
+  total_trades: number;
+  win_rate: number;
+  profit_factor: number;
+  avg_holding_days: number;
+  buy_and_hold_return_pct: number;
+  excess_return_pct: number;
+  final_portfolio_value: number;
+}
+
+export interface RLSignal {
+  date: string;
+  action: RLAction;
+  confidence: number;
+}
+
+export interface RLEvalResponse {
+  metrics: RLEvalMetrics;
+  signals: RLSignal[];
+  trades: Record<string, unknown>[];
+}
+
+export interface RLModel {
+  ticker: string;
+  algorithm: string;
+  filename: string;
+  size_kb: number;
+}
+
+export interface RLUploadResult {
+  filename: string;
+  rows: number;
+  columns: string[];
+  tickers: string[];
+  date_range: { start: string | null; end: string | null };
+}
+
+export interface RLUploadedFile {
+  filename: string;
+  size_kb: number;
 }
