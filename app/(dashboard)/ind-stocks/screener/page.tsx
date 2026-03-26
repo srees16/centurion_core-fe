@@ -60,7 +60,7 @@ export default function INDScreenerPage() {
           </Button>
           <div className="flex items-center gap-2 mt-1">
             <Checkbox id="fire-orders" checked={fireOrders} onCheckedChange={(v) => setFireOrders(v === true)} />
-            <Label htmlFor="fire-orders" className="text-xs cursor-pointer select-none">Fire orders after screening &amp; verdict</Label>
+            <Label htmlFor="fire-orders" className="text-xs cursor-pointer select-none">Trigger Orders</Label>
           </div>
           {screenError && <p className="text-sm text-destructive">{screenError}</p>}
         </div>

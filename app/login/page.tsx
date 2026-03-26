@@ -21,7 +21,7 @@ export default function LoginPage() {
   useEffect(() => {
     checkAuth().then(() => {
       if (useAuthStore.getState().isAuthenticated) {
-        router.replace("/ind-stocks/fly-kite");
+        router.replace("/ind-stocks");
       }
     });
   }, [checkAuth, router]);
@@ -36,7 +36,7 @@ export default function LoginPage() {
     const t2 = setTimeout(() => setStatusMsg("Backend is waking up — hang tight..."), 8000);
     try {
       await login(username, password);
-      router.replace("/ind-stocks/fly-kite");
+      router.replace("/ind-stocks");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
