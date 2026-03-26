@@ -549,3 +549,101 @@ export interface RLUploadedFile {
   filename: string;
   size_kb: number;
 }
+
+// ─── Green Energy Portfolio Analysis ──────────────────────────────────────
+export interface PortfolioPerformance {
+  period: { start: string; end: string; trading_days: number; years: number };
+  green_energy: {
+    total_return_pct: number;
+    cagr_pct: number;
+    annualized_vol_pct: number;
+    sharpe_ratio: number;
+    max_drawdown_pct: number;
+    final_value: number;
+  };
+  benchmark: {
+    total_return_pct: number;
+    cagr_pct: number;
+    annualized_vol_pct: number;
+    sharpe_ratio: number;
+    max_drawdown_pct: number;
+    final_value: number;
+  };
+  alpha_pct: number;
+  total_rebalances: number;
+}
+
+export interface PortfolioStock {
+  stock: string;
+  periods: number;
+  total_periods: number;
+  persistence_pct: number;
+  avg_weight_pct: number;
+  max_weight_pct: number;
+  cumulative_weight: number;
+  themes: string[];
+  currently_held: boolean;
+  current_weight_pct: number | null;
+}
+
+export interface ThemeAnalysis {
+  theme: string;
+  appearances: number;
+  total_weight: number;
+}
+
+export interface PeriodPerformance {
+  start_date: string;
+  end_date: string;
+  days: number;
+  ge_return_pct: number;
+  benchmark_return_pct: number;
+  alpha_pct: number;
+}
+
+export interface ChartPoint {
+  date: string;
+  ge: number;
+  benchmark: number;
+  rebalance: boolean;
+}
+
+export interface LearnedFactors {
+  top_factor_categories: { name: string; weight: number; themes: string[] }[];
+  top_portfolio_themes: { theme: string; weight: number }[];
+  most_persistent_stocks: { stock: string; persistence_pct: number; avg_weight_pct: number }[];
+  selection_characteristics: string[];
+}
+
+export interface NiftyPrediction {
+  ticker: string;
+  name: string;
+  sector: string;
+  themes: string[];
+  indices: string[];
+  signal: DecisionTag;
+  composite_score: number;
+  factor_scores: {
+    theme_alignment: number;
+    portfolio_proven: number;
+    sector_momentum: number;
+    conviction: number;
+    recency: number;
+  };
+  matched_themes: string[];
+  reasoning: string;
+}
+
+export interface PortfolioAnalysisResponse {
+  performance: PortfolioPerformance;
+  constituent_analysis: {
+    total_unique_stocks: number;
+    total_periods: number;
+    top_stocks: PortfolioStock[];
+    themes: ThemeAnalysis[];
+  };
+  period_performance: PeriodPerformance[];
+  chart_data: ChartPoint[];
+  learned_factors: LearnedFactors;
+  predictions: NiftyPrediction[];
+}
