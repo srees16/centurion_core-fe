@@ -620,6 +620,7 @@ export interface NiftyPrediction {
   name: string;
   sector: string;
   themes: string[];
+  indices: string[];
   signal: DecisionTag;
   composite_score: number;
   factor_scores: {

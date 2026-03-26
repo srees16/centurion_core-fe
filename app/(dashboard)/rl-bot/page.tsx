@@ -431,6 +431,11 @@ export default function RLBotPage() {
                               {SIGNAL_LABELS[p.signal]}
                             </span>
                             <span className="text-xs text-muted-foreground">{p.sector}</span>
+                            {p.indices?.map((idx) => (
+                              <span key={idx} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-600 rounded text-[10px] border border-blue-500/20">
+                                {idx}
+                              </span>
+                            ))}
                           </div>
                           <p className="text-xs text-muted-foreground truncate">{p.name}</p>
                           <div className="flex flex-wrap gap-1 mt-1">
