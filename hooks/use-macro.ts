@@ -1,29 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-
-interface MacroSnapshot {
-  vix: number | null;
-  vix_label: string;
-  index_name: string;
-  index_price: number | null;
-  index_change_pct: number | null;
-  us_10y_yield: number | null;
-  gold_price: number | null;
-  crude_oil_price: number | null;
-  macro_sentiment_label: string | null;
-  macro_sentiment_score: number | null;
-}
-
-interface FearGreed {
-  score: number | null;
-  label: string;
-}
-
-interface TickerPrice {
-  symbol: string;
-  price: number;
-  change_pct: number;
-}
+import type { MacroSnapshot, FearGreedIndex, TickerPrice, PortfolioRiskSnapshot } from "@/lib/types";
 
 interface TickerPricesResponse {
   is_market_open: boolean;
@@ -42,7 +19,7 @@ export function useMacroSnapshot(market: string) {
 export function useFearGreed() {
   return useQuery({
     queryKey: ["fear-greed"],
-    queryFn: () => api.get<FearGreed>("/api/v1/macro/fear-greed"),
+    queryFn: () => api.get<FearGreedIndex>("/api/v1/macro/fear-greed"),
     staleTime: 10 * 60 * 1000, // 10 min
     retry: 1,
   });
@@ -71,4 +48,14 @@ export function useTickerPrices(symbols: string[], market: string) {
     prices: query.data?.prices ?? [],
     isMarketOpen: query.data?.is_market_open ?? false,
   };
+}
+
+export function usePortfolioRisk(market: string) {
+  return useQuery({
+    queryKey: ["portfolio-risk", market],
+    queryFn: () => api.get<PortfolioRiskSnapshot>("/api/v1/macro/portfolio-risk", { market }),
+    staleTime: 30_000, // 30s
+    refetchInterval: 60_000, // 1 min
+    retry: 1,
+  });
 }

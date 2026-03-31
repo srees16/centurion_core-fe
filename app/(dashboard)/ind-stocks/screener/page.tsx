@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ScreenerConfigForm } from "@/components/forms/screener-config";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
 import { RibbonVixBar } from "@/components/common/ribbon-vix-bar";
+import { DrawdownIndicator } from "@/components/common/drawdown-indicator";
 import { Spinner } from "@/components/common/spinner";
 import { Button } from "@/components/ui/button";
 import { NIFTY_50_TICKERS } from "@/lib/constants";
@@ -42,6 +43,7 @@ export default function INDScreenerPage() {
   return (
     <div className="space-y-6">
       <RibbonVixBar symbols={NIFTY_50_TICKERS} market="IND" />
+      <DrawdownIndicator market="IND" />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="content-panel p-4 space-y-4">
           <h3 className="text-sm font-semibold">Screener Config</h3>

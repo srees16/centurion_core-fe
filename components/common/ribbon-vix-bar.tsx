@@ -3,15 +3,19 @@
 import { cn } from "@/lib/utils";
 import { VIX_CAUTION_THRESHOLD, VIX_PANIC_THRESHOLD } from "@/lib/constants";
 import { useMacroSnapshot, useTickerPrices } from "@/hooks/use-macro";
+import type { RegimeLabel, RiskLevel } from "@/lib/types";
 
 interface RibbonVixBarProps {
   tickers?: { symbol: string; price: number; change_pct: number }[];
   symbols?: string[];
   vix?: number;
+  regime?: RegimeLabel;
+  riskLevel?: RiskLevel;
+  drawdownPct?: number;
   market?: "US" | "IND";
 }
 
-export function RibbonVixBar({ tickers = [], symbols = [], vix, market }: RibbonVixBarProps) {
+export function RibbonVixBar({ tickers = [], symbols = [], vix, market, regime, riskLevel, drawdownPct }: RibbonVixBarProps) {
   const inferredMarket = market ?? (symbols.some((s) => ["NIFTY50", "BANKNIFTY", "SENSEX"].includes(s)) ? "IND" : "US");
   const macroQ = useMacroSnapshot(inferredMarket);
   const macro = macroQ.data;
@@ -93,6 +97,38 @@ export function RibbonVixBar({ tickers = [], symbols = [], vix, market }: Ribbon
           <span className={cn("px-2 py-0.5 rounded-full text-white text-[0.65rem] font-bold uppercase", sentimentColor)}>
             {macro.macro_sentiment_label}
           </span>
+        )}
+
+        {/* Regime Pill */}
+        {regime && (
+          <div className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-[0.65rem] font-bold",
+            regime === "TRENDING_BULL" ? "bg-green-600" :
+            regime === "TRENDING_BEAR" ? "bg-red-600" :
+            regime === "HIGH_VOLATILITY" ? "bg-orange-500" :
+            regime === "CRISIS" ? "bg-red-800" : "bg-blue-500"
+          )}>
+            <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
+            {regime.replace("_", " ")}
+          </div>
+        )}
+
+        {/* Drawdown / Risk Level */}
+        {riskLevel && riskLevel !== "NORMAL" && (
+          <div className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-[0.65rem] font-bold animate-pulse",
+            riskLevel === "WARNING" ? "bg-yellow-600" :
+            riskLevel === "CRITICAL" ? "bg-red-600" : "bg-red-900"
+          )}>
+            ⚠ {riskLevel}{drawdownPct != null ? ` (DD ${drawdownPct.toFixed(1)}%)` : ""}
+          </div>
+        )}
+
+        {/* VIX Signal Suppression Warning */}
+        {effectiveVix !== undefined && effectiveVix > VIX_PANIC_THRESHOLD && (
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-900 text-white text-[0.65rem] font-bold">
+            ⛔ Signals Suppressed
+          </div>
         )}
 
         {/* Index Price */}
