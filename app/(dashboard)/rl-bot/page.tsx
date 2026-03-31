@@ -91,10 +91,10 @@ export default function RLBotPage() {
   const [algorithm, setAlgorithm] = useState<RLAlgorithm>("PPO");
   const [rewardType, setRewardType] = useState<(typeof REWARD_TYPES)[number]>("sharpe");
   const [timesteps, setTimesteps] = useState(50000);
-  const [lookback, setLookback] = useState(30);
-  const [trainDays, setTrainDays] = useState(252);
+  const [lookback, setLookback] = useState(60);
+  const [trainDays, setTrainDays] = useState(504);
   const [testDays, setTestDays] = useState(63);
-  const [folds, setFolds] = useState(3);
+  const [folds, setFolds] = useState(6);
   const [capital, setCapital] = useState(100000);
 
   const [trainResult, setTrainResult] = useState<RLTrainResponse | null>(null);

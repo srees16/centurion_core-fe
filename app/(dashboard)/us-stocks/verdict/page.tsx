@@ -32,6 +32,7 @@ function LayerDetailPanel({ r }: { r: VerdictResult }) {
             { layer: "Core", score: r.core_score },
             { layer: "Strategy + Robustness", score: r.strategy_score },
             { layer: "ML", score: r.ml_score },
+            { layer: "RL", score: r.rl_score },
           ]}
         />
       </div>
@@ -101,8 +102,8 @@ export default function USVerdictPage() {
       tickers,
       market: "US",
       date_range: ["", ""],
-      skip_layers: ["ml_features"],
-      weights: { core: 0.45, strategy: 0.55 },
+      skip_layers: [],
+      weights: { core: 0.40, strategy: 0.45, rl_bot: 0.15 },
     });
   };
 

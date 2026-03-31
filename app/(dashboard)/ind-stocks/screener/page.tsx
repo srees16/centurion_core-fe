@@ -21,7 +21,7 @@ export default function INDScreenerPage() {
     min_price: 10, min_avg_volume: 500000, min_beta: 0.5, workers: 4, volume_multiplier: 1.5, lookback_days: 30, index_mode: false,
   });
   const [riskCfg, setRiskCfg] = useState<RiskConfig>({
-    total_capital: 500000, max_open_trades: 5, risk_per_trade_pct: 2, pullback_tolerance_pct: 3, min_rr_ratio: 2, stop_loss_method: "tighter",
+    total_capital: 500000, max_open_trades: 12, risk_per_trade_pct: 2, pullback_tolerance_pct: 3, min_rr_ratio: 2, stop_loss_method: "tighter",
   });
 
   const { screenAsync, isScreening, screenResult, screenError, execute, isExecuting } = useScreener();

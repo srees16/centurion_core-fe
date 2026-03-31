@@ -14,6 +14,7 @@ import {
   useKiteHoldings,
   useKitePositions,
   useKiteOrders,
+  useCarverStatus,
 } from "@/hooks/use-kite";
 import { DEFAULT_IND_TICKERS, NIFTY_50_TICKERS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
@@ -23,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import {
   Play, Square, RefreshCw, TrendingUp, Briefcase, BarChart3, ClipboardList,
-  AlertCircle, Zap, Shield, LineChart, ExternalLink, KeyRound,
+  AlertCircle, Zap, Shield, LineChart, ExternalLink, KeyRound, Settings2,
 } from "lucide-react";
 
 function KiteLanding({
@@ -169,6 +170,7 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
   const positionsQ = useKitePositions();
   const ordersQ = useKiteOrders();
   const stopSession = useKiteSessionStop();
+  const carverQ = useCarverStatus();
 
   const holdingsPnl = holdingsQ.data?.reduce((a, h) => a + h.pnl, 0) ?? 0;
   const positionsPnl = positionsQ.data?.reduce((a, p) => a + p.pnl, 0) ?? 0;
@@ -216,6 +218,33 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
           value={ordersQ.data?.filter((o) => o.status === "OPEN").length ?? 0}
         />
       </MetricsGrid>
+
+      {/* Carver Pipeline Status */}
+      {carverQ.data && (
+        <div className="rounded-lg border bg-secondary/30 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Settings2 className="h-4 w-4 text-blue-500" />
+            <h3 className="text-sm font-bold">Carver Pipeline</h3>
+            <Badge variant={carverQ.data.carver_enabled ? "default" : "secondary"} className={carverQ.data.carver_enabled ? "bg-green-600 text-white" : ""}>
+              {carverQ.data.carver_enabled ? "Active" : "Disabled"}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 text-xs">
+            <div><span className="text-muted-foreground">Vol Target</span><p className="font-semibold">{(carverQ.data.vol_target * 100).toFixed(0)}%</p></div>
+            <div><span className="text-muted-foreground">IDM</span><p className="font-semibold">{carverQ.data.idm}×</p></div>
+            <div><span className="text-muted-foreground">Max Leverage</span><p className="font-semibold">{carverQ.data.max_leverage}×</p></div>
+            <div><span className="text-muted-foreground">Forecasts</span><p className="font-semibold">{carverQ.data.forecast_sources}</p></div>
+            <div><span className="text-muted-foreground">Max Positions</span><p className="font-semibold">{carverQ.data.max_open_trades}</p></div>
+            <div><span className="text-muted-foreground">Capital</span><p className="font-semibold">{formatCurrency(carverQ.data.initial_capital, "INR")}</p></div>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {carverQ.data.options_enabled && <Badge variant="outline" className="text-[0.65rem]">Options ON</Badge>}
+            {carverQ.data.rl_enabled && <Badge variant="outline" className="text-[0.65rem]">RL ON</Badge>}
+            <Badge variant="outline" className="text-[0.65rem]">ML Gate ≥ {(carverQ.data.meta_label_min_prob * 100).toFixed(0)}%</Badge>
+            <Badge variant="outline" className="text-[0.65rem]">DD Gates {carverQ.data.dd_warning_pct}% / {carverQ.data.dd_critical_pct}% / {carverQ.data.dd_halt_pct}%</Badge>
+          </div>
+        </div>
+      )}
 
       <QuickTradePanel symbols={DEFAULT_IND_TICKERS} />
 
