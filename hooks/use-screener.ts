@@ -3,18 +3,13 @@ import { api } from "@/lib/api-client";
 import type {
   ScreenerConfig,
   RiskConfig,
-  ScreenedStock,
   TradePlan,
   OrderResult,
   TradeMonitorSummary,
+  ScreenerResponse,
+  ScreenerExecuteResponse,
 } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-
-interface ScreenerResponse {
-  stocks: ScreenedStock[];
-  trade_plans: TradePlan[];
-  summary: Record<string, unknown>;
-}
 
 export function useScreener() {
   const qc = useQueryClient();
@@ -26,7 +21,7 @@ export function useScreener() {
 
   const executeMutation = useMutation({
     mutationFn: (plans: TradePlan[]) =>
-      api.post<OrderResult[]>("/api/v1/screener/execute", { plans }),
+      api.post<ScreenerExecuteResponse>("/api/v1/screener/execute", { plans }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["trade-monitor"] });
     },

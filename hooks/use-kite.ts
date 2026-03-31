@@ -5,12 +5,8 @@ import type {
   KiteHolding,
   KitePosition,
   KiteOrder,
+  KiteSessionStatus,
 } from "@/lib/types";
-
-interface KiteSessionStatus {
-  active: boolean;
-  profile: Record<string, unknown> | null;
-}
 
 export function useKiteSessionStatus() {
   return useQuery({
