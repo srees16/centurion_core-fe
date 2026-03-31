@@ -161,18 +161,131 @@ export interface EquityPoint {
 }
 
 // ─── Verdict ──────────────────────────────────────────────────────────────
+
+export type RegimeLabel = "TRENDING_BULL" | "TRENDING_BEAR" | "RANGE_BOUND" | "HIGH_VOLATILITY" | "CRISIS";
+
+export interface VerdictCoreLayer {
+  fundamental: number;
+  technical: number;
+  macro: number;
+  delivery_conviction?: number;
+  earnings_momentum_boost?: number;
+  combined: number;
+}
+
+export interface VerdictSectorInfo {
+  sector: string;
+  sector_return_20d: number;
+}
+
+export interface VerdictWalkForward {
+  degradation_ratio: number;
+  adjustment: number;
+  rejected_overfit: boolean;
+}
+
+export interface VerdictRobustness {
+  cscv_pbo: number;
+  bca_lower_95: number;
+  bca_upper_95: number;
+  perm_p_value: number;
+  perm_z_score: number;
+  perm_significant: boolean;
+  rejected_random: boolean;
+  skill_fraction: number;
+  luck_fraction: number;
+  skill_p_value: number;
+  best_of_n_p: number;
+  best_of_n_significant: boolean;
+  adjustment: number;
+}
+
+export interface VerdictPerStrategy {
+  sharpe: number | null;
+  max_drawdown: number | null;
+  last_signal: string;
+}
+
+export interface VerdictBenchmark {
+  nifty_return_pct: number;
+  stock_return_pct: number;
+  excess_return_pct: number;
+  jensens_alpha: number;
+  beta_vs_nifty: number;
+  information_ratio: number;
+}
+
+export interface VerdictStrategyLayer {
+  buy_votes: number;
+  sell_votes: number;
+  total_strategies: number;
+  median_sharpe: number;
+  worst_max_drawdown: number;
+  consensus_raw: number;
+  trade_horizon: string;
+  sector: VerdictSectorInfo;
+  walk_forward: VerdictWalkForward;
+  robustness: VerdictRobustness;
+  per_strategy: Record<string, VerdictPerStrategy>;
+  benchmark?: VerdictBenchmark;
+}
+
+export interface VerdictMLFeatures {
+  frac_diff_d04: number;
+  sadf_peak: number;
+  roll_spread: number;
+  amihud_lambda_last: number;
+  sharpe_ratio: number;
+  psr: number;
+  max_drawdown: number;
+  triple_barrier_buy_pct: number;
+  triple_barrier_sell_pct: number;
+  purged_cv_mean_accuracy: number;
+  purged_cv_scores: number[];
+  kelly_bet_size: number;
+  kelly_signal_strength: number;
+}
+
+export interface VerdictRegime {
+  regime: RegimeLabel;
+  position_scale: number;
+  vix_level: number;
+}
+
+export interface VerdictFiiDii {
+  sentiment_score: number;
+  consecutive_fii_selling: number;
+  is_heavy: boolean;
+}
+
+export interface VerdictFreshness {
+  adjustment: number;
+  bulk_deals: boolean;
+  pledge_change: number;
+  mf_change: number;
+}
+
+export interface VerdictLayerDetails {
+  core: VerdictCoreLayer;
+  strategy: VerdictStrategyLayer;
+  ml_features?: VerdictMLFeatures;
+  regime: VerdictRegime;
+  fii_dii?: VerdictFiiDii;
+  freshness?: VerdictFreshness;
+}
+
 export interface VerdictResult {
   ticker: string;
   core_score: number;
   strategy_score: number;
   ml_score: number;
   rl_score: number;
-  robustness_score: number; // embedded in strategy — kept for backward compat
+  robustness_score: number;
   weighted_score: number;
   verdict: DecisionTag;
-  layer_details: Record<string, unknown>;
-  strategy_breakdown: Record<string, unknown>;
-  radar_chart?: string; // base64 PNG
+  layer_details: VerdictLayerDetails;
+  strategy_breakdown: VerdictStrategyLayer;
+  radar_chart?: string;
 }
 
 export interface VerdictRequest {
@@ -519,9 +632,12 @@ export interface RLEvalMetrics {
 }
 
 export interface RLSignal {
+  ticker?: string;
   date: string;
   action: RLAction;
   confidence: number;
+  portfolio_value?: number;
+  position?: number;
 }
 
 export interface RLEvalResponse {
@@ -646,4 +762,116 @@ export interface PortfolioAnalysisResponse {
   chart_data: ChartPoint[];
   learned_factors: LearnedFactors;
   predictions: NiftyPrediction[];
+}
+
+// ─── Macro Snapshot ───────────────────────────────────────────────────────
+export interface MacroSnapshot {
+  vix: number | null;
+  vix_label: string;
+  index_name: string;
+  index_price: number | null;
+  index_change_pct: number | null;
+  us_10y_yield: number | null;
+  gold_price: number | null;
+  crude_oil_price: number | null;
+  macro_sentiment_label: string | null;
+  macro_sentiment_score: number | null;
+}
+
+export interface FearGreedIndex {
+  score: number | null;
+  label: string;
+}
+
+export interface TickerPrice {
+  symbol: string;
+  price: number;
+  change_pct: number;
+}
+
+// ─── Kite Session ─────────────────────────────────────────────────────────
+export interface KiteSessionStatus {
+  active: boolean;
+  profile: Record<string, unknown> | null;
+  remaining_seconds?: number;
+  remaining_minutes?: number;
+  expiring_soon?: boolean;
+}
+
+export interface KitePortfolioPnLPosition {
+  symbol: string;
+  quantity: number;
+  avg_price: number;
+  ltp: number;
+  pnl: number;
+  pnl_pct: number;
+  day_change: number;
+  holding?: boolean;
+}
+
+export interface KitePortfolioPnL {
+  total_invested: number;
+  total_current: number;
+  total_pnl: number;
+  total_pnl_pct: number;
+  day_pnl: number;
+  positions: KitePortfolioPnLPosition[];
+}
+
+// ─── Screener Execute ─────────────────────────────────────────────────────
+export interface ScreenerResponse {
+  stocks: ScreenedStock[];
+  trade_plans: TradePlan[];
+  summary: { screened: number; passed: number };
+}
+
+export interface ScreenerExecuteResponse {
+  orders: OrderResult[];
+  verdict_blocked: number;
+  total_placed: number;
+}
+
+// ─── Carver Orders ────────────────────────────────────────────────────────
+export interface CarverTradeResult {
+  symbol: string;
+  quantity: number;
+  forecast: number;
+  vol_target: number;
+  sizing_method: string;
+}
+
+export interface CarverOrderPlaced {
+  symbol: string;
+  quantity: number;
+  status: "placed" | "failed";
+  order_id: string;
+  error?: string;
+}
+
+export interface CarverOrdersResponse {
+  success: boolean;
+  trade_plans: CarverTradeResult[];
+  orders_placed: CarverOrderPlaced[];
+  dry_run: boolean;
+  pipeline_log: string[];
+}
+
+// ─── Portfolio Risk ───────────────────────────────────────────────────────
+export type RiskLevel = "NORMAL" | "WARNING" | "CRITICAL" | "HALTED";
+
+export interface PortfolioRiskSnapshot {
+  timestamp: string;
+  portfolio_daily_vol: number;
+  portfolio_annual_vol_pct: number;
+  target_annual_vol_pct: number;
+  vol_ratio: number;
+  hhi: number;
+  largest_position_pct: number;
+  peak_equity: number;
+  current_equity: number;
+  drawdown_pct: number;
+  risk_level: RiskLevel;
+  scale_factor: number;
+  emergency_liquidate: boolean;
+  alerts: string[];
 }
