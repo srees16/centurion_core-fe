@@ -29,7 +29,7 @@ export const HEALTH_COLORS: Record<string, string> = {
 
 // ─── VIX Thresholds ──────────────────────────────────────────────────────
 export const VIX_CAUTION_THRESHOLD = 20.0;
-export const VIX_PANIC_THRESHOLD = 25.0;
+export const VIX_PANIC_THRESHOLD = 30.0;
 
 // ─── Default Tickers ─────────────────────────────────────────────────────
 export const DEFAULT_US_TICKERS = [
@@ -192,7 +192,7 @@ export const OUTPUT_FORMATS = [
 export const INDEX_OPTIONS = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"];
 
 // ─── Verdict Layers ──────────────────────────────────────────────────────
-export const VERDICT_LAYERS = ["core", "strategy", "ml_features"];
+export const VERDICT_LAYERS = ["core", "strategy", "ml_features", "rl_bot"];
 
 // ─── Stop-Loss Methods ──────────────────────────────────────────────────
 export const SL_METHODS = [

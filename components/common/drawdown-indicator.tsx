@@ -54,6 +54,11 @@ export function DrawdownIndicator({ market, compact = false }: DrawdownIndicator
           <p className={cn("font-bold text-sm", risk.drawdown_pct > 10 ? "text-red-500" : risk.drawdown_pct > 5 ? "text-yellow-500" : "")}>
             {risk.drawdown_pct.toFixed(1)}%
           </p>
+          <div className="flex gap-1 mt-1">
+            <span className={cn("px-1 rounded text-[0.6rem] font-semibold border", risk.drawdown_pct >= 15 ? "bg-yellow-600/20 border-yellow-600/40 text-yellow-500" : "border-muted-foreground/20 text-muted-foreground/50")}>15%</span>
+            <span className={cn("px-1 rounded text-[0.6rem] font-semibold border", risk.drawdown_pct >= 25 ? "bg-red-600/20 border-red-600/40 text-red-500" : "border-muted-foreground/20 text-muted-foreground/50")}>25%</span>
+            <span className={cn("px-1 rounded text-[0.6rem] font-semibold border", risk.drawdown_pct >= 30 ? "bg-red-900/30 border-red-800/50 text-red-400 animate-pulse" : "border-muted-foreground/20 text-muted-foreground/50")}>30%</span>
+          </div>
         </div>
         <div>
           <span className="text-muted-foreground">Annual Vol</span>

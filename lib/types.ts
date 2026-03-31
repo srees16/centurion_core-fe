@@ -856,6 +856,25 @@ export interface CarverOrdersResponse {
   pipeline_log: string[];
 }
 
+// ─── Carver Status ────────────────────────────────────────────────────────
+export interface CarverStatus {
+  carver_enabled: boolean;
+  vol_target: number;
+  idm: number;
+  max_leverage: number;
+  initial_capital: number;
+  trade_horizon: string;
+  options_enabled: boolean;
+  rl_enabled: boolean;
+  meta_label_min_prob: number;
+  forecast_sources: number;
+  max_open_trades: number;
+  regime?: RegimeLabel;
+  dd_warning_pct: number;
+  dd_critical_pct: number;
+  dd_halt_pct: number;
+}
+
 // ─── Portfolio Risk ───────────────────────────────────────────────────────
 export type RiskLevel = "NORMAL" | "WARNING" | "CRITICAL" | "HALTED";
 
