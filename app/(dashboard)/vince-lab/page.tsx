@@ -11,7 +11,7 @@ import { Spinner } from "@/components/common/spinner";
 import { useVinceChapters, useVinceRun } from "@/hooks/use-vince";
 import { VINCE_CATEGORIES, DEFAULT_VINCE_TICKERS } from "@/lib/constants";
 import { format } from "date-fns";
-import { Play, TrendingUp, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Play, TrendingUp, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TickerMode = "default" | "manual" | "csv";
@@ -78,6 +78,9 @@ export default function VinceLabPage() {
         <TrendingUp className="h-5 w-5 text-emerald-500" />
         <h2 className="text-lg font-semibold">Vince Risk Lab</h2>
         <span className="text-xs text-muted-foreground">Leverage Space Model & Optimal f</span>
+        <a href="/vince-lab/history" className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <History className="h-3.5 w-3.5" /> History
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

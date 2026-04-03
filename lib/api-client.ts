@@ -36,7 +36,17 @@ class ApiClient {
       // Try to extract a JSON error detail; fall back to a clean message
       try {
         const json = JSON.parse(body);
-        throw new Error(json.detail || json.message || `HTTP ${res.status}`);
+        const detail = json.detail || json.message;
+        if (detail) {
+          // FastAPI validation errors return detail as an array of objects
+          const msg = typeof detail === "string"
+            ? detail
+            : Array.isArray(detail)
+              ? detail.map((d: any) => d.msg || JSON.stringify(d)).join("; ")
+              : JSON.stringify(detail);
+          throw new Error(msg);
+        }
+        throw new Error(`HTTP ${res.status}`);
       } catch (e) {
         if (e instanceof Error && e.message !== `HTTP ${res.status}`) throw e;
       }
