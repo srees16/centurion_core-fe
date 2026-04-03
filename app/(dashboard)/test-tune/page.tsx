@@ -11,7 +11,7 @@ import { Spinner } from "@/components/common/spinner";
 import { useTtsChapters, useTtsRun } from "@/hooks/use-tts";
 import { TTS_CATEGORIES, DEFAULT_TTS_TICKERS } from "@/lib/constants";
 import { format } from "date-fns";
-import { Play, Wrench, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Play, Wrench, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TickerMode = "default" | "manual" | "csv";
@@ -88,6 +88,9 @@ export default function TestTunePage() {
         <Wrench className="h-5 w-5 text-orange-500" />
         <h2 className="text-lg font-semibold">Test & Tune Trading Systems</h2>
         <span className="text-xs text-muted-foreground">Based on Timothy Masters</span>
+        <a href="/test-tune/history" className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <History className="h-3.5 w-3.5" /> History
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

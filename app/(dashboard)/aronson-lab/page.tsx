@@ -11,7 +11,7 @@ import { Spinner } from "@/components/common/spinner";
 import { useAronsonChapters, useAronsonRun } from "@/hooks/use-aronson";
 import { ARONSON_CATEGORIES, DEFAULT_ARONSON_TICKERS } from "@/lib/constants";
 import { format } from "date-fns";
-import { Play, ShieldCheck, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Play, ShieldCheck, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TickerMode = "default" | "manual" | "csv";
@@ -78,6 +78,9 @@ export default function AronsonLabPage() {
         <ShieldCheck className="h-5 w-5 text-amber-500" />
         <h2 className="text-lg font-semibold">Aronson Validator Lab</h2>
         <span className="text-xs text-muted-foreground">Evidence-Based Technical Analysis</span>
+        <a href="/aronson-lab/history" className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <History className="h-3.5 w-3.5" /> History
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

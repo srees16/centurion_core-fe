@@ -236,7 +236,11 @@ export default function INDOptionsPage() {
                 Scan Overlay Strategies
               </Button>
               {overlayScan.error && (
-                <p className="text-sm text-red-500">{overlayScan.error.message}</p>
+                <p className="text-sm text-red-500">
+                  {overlayScan.error instanceof Error
+                    ? overlayScan.error.message
+                    : String(overlayScan.error)}
+                </p>
               )}
             </div>
 
