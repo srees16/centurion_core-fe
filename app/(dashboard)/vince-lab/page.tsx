@@ -78,8 +78,8 @@ export default function VinceLabPage() {
         <TrendingUp className="h-5 w-5 text-emerald-500" />
         <h2 className="text-lg font-semibold">Vince Risk Lab</h2>
         <span className="text-xs text-muted-foreground">Leverage Space Model & Optimal f</span>
-        <a href="/vince-lab/history" className="ml-auto flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          <History className="h-4 w-4" /> History
+        <a href="/vince-lab/history" className="ml-auto flex items-center gap-1.5 text-base font-semibold text-muted-foreground hover:text-foreground transition-colors">
+          <History className="h-5 w-5" /> History
         </a>
       </div>
 

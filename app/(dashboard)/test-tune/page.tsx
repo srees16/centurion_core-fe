@@ -88,8 +88,8 @@ export default function TestTunePage() {
         <Wrench className="h-5 w-5 text-orange-500" />
         <h2 className="text-lg font-semibold">Test & Tune Trading Systems</h2>
         <span className="text-xs text-muted-foreground">Based on Timothy Masters</span>
-        <a href="/test-tune/history" className="ml-auto flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          <History className="h-4 w-4" /> History
+        <a href="/test-tune/history" className="ml-auto flex items-center gap-1.5 text-base font-semibold text-muted-foreground hover:text-foreground transition-colors">
+          <History className="h-5 w-5" /> History
         </a>
       </div>
 

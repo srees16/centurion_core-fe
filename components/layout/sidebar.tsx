@@ -31,12 +31,10 @@ function getSubPages(key: string) {
   if (key === "financial-ml")
     return [
       { key: "main", label: "Chapters", href: "/financial-ml" },
-      { key: "history", label: "History", href: "/financial-ml/history" },
     ];
   if (key === "test-tune")
     return [
       { key: "main", label: "Chapters", href: "/test-tune" },
-      { key: "history", label: "History", href: "/test-tune/history" },
     ];
   return [];
 }
