@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 
 /**
- * Vercel Cron Job — pings the HF Spaces backend every 5 minutes
- * to prevent the free-tier container from sleeping after 48h inactivity.
+ * Keep-alive endpoint — pings the HF Spaces backend /health to prevent
+ * the free-tier container from sleeping after 48h inactivity.
  *
- * Configured in vercel.json: crons[].schedule = "*/5 * * * *"
+ * Called externally by UptimeRobot (every 5 min) rather than Vercel cron
+ * (Hobby plan only supports daily crons).
  */
 
 const HF_HEALTH_URL =
