@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import type { ChapterInfo, AsyncBatchProgress } from "@/lib/types";
+import type { ChapterInfo, AsyncBatchProgress, BatchRunHistoryRow } from "@/lib/types";
 import { useState, useCallback, useEffect, useRef } from "react";
 
 export function useVinceChapters() {
@@ -62,4 +62,15 @@ export function useVinceRun() {
     abort,
     isAborted,
   };
+}
+
+export function useVinceHistory(page = 1, limit = 50) {
+  return useQuery({
+    queryKey: ["vince-history", page, limit],
+    queryFn: () =>
+      api.get<{ data: BatchRunHistoryRow[]; total: number }>(
+        "/api/v1/vince/history",
+        { page: String(page), limit: String(limit) },
+      ),
+  });
 }

@@ -11,7 +11,7 @@ import { Spinner } from "@/components/common/spinner";
 import { useFmlChapters, useFmlRun } from "@/hooks/use-fml";
 import { FML_CATEGORIES, DEFAULT_FML_TICKERS } from "@/lib/constants";
 import { format, parse } from "date-fns";
-import { Play, FlaskConical, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Play, FlaskConical, CalendarDays, Tag, Upload, ChevronDown, ChevronRight, X, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TickerMode = "default" | "manual" | "csv";
@@ -88,6 +88,9 @@ export default function FinancialMLPage() {
         <FlaskConical className="h-5 w-5 text-purple-500" />
         <h2 className="text-lg font-semibold">Advanced Financial Machine Learning</h2>
         <span className="text-xs text-muted-foreground">Based on Marcos López de Prado</span>
+        <a href="/financial-ml/history" className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <History className="h-3.5 w-3.5" /> History
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
