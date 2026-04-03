@@ -29,13 +29,9 @@ function getSubPages(key: string) {
       { key: "integrated", label: "Integrated RL", href: "/rl-bot/integrated" },
     ];
   if (key === "financial-ml")
-    return [
-      { key: "main", label: "Chapters", href: "/financial-ml" },
-    ];
+    return [];
   if (key === "test-tune")
-    return [
-      { key: "main", label: "Chapters", href: "/test-tune" },
-    ];
+    return [];
   return [];
 }
 
