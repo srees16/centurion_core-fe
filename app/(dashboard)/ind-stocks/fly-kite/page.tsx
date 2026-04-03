@@ -16,7 +16,7 @@ import {
   useKiteOrders,
   useCarverStatus,
 } from "@/hooks/use-kite";
-import { DEFAULT_IND_TICKERS, NIFTY_50_TICKERS } from "@/lib/constants";
+import { DEFAULT_IND_TICKERS, NIFTY_50_TICKERS, NSE_HOLIDAYS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -175,12 +175,13 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
   const holdingsPnl = holdingsQ.data?.reduce((a, h) => a + h.pnl, 0) ?? 0;
   const positionsPnl = positionsQ.data?.reduce((a, p) => a + p.pnl, 0) ?? 0;
 
-  // NSE market hours: Mon–Fri, 9:15 AM – 3:30 PM IST
+  // NSE market hours: Mon–Fri, 9:15 AM – 3:30 PM IST (excl. holidays)
   const now = new Date();
   const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
   const day = ist.getDay();
   const mins = ist.getHours() * 60 + ist.getMinutes();
-  const isMarketOpen = day >= 1 && day <= 5 && mins >= 555 && mins <= 930;
+  const istDate = `${ist.getFullYear()}-${String(ist.getMonth() + 1).padStart(2, "0")}-${String(ist.getDate()).padStart(2, "0")}`;
+  const isMarketOpen = day >= 1 && day <= 5 && mins >= 555 && mins <= 930 && !NSE_HOLIDAYS.has(istDate);
 
   const handleDisconnect = () => {
     stopSession.mutate(undefined, { onSuccess: onDisconnect });
