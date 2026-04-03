@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { APP_MODULES, US_SUB_PAGES, IND_SUB_PAGES } from "@/lib/constants";
 import {
   BarChart3, Globe, Brain, FlaskConical, Bitcoin, MessageSquare,
-  ChevronDown, ChevronRight, Menu, X, Bot,
+  ChevronDown, ChevronRight, Menu, X, Bot, ShieldCheck, Activity, TrendingUp,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -16,6 +16,9 @@ const MODULE_ICONS: Record<string, React.ReactNode> = {
   "rl-bot": <Bot className="h-4 w-4" />,
   "financial-ml": <Brain className="h-4 w-4" />,
   "test-tune": <FlaskConical className="h-4 w-4" />,
+  "aronson-lab": <ShieldCheck className="h-4 w-4" />,
+  "ehlers-lab": <Activity className="h-4 w-4" />,
+  "vince-lab": <TrendingUp className="h-4 w-4" />,
   "crypto": <Bitcoin className="h-4 w-4" />,
   "rag-engine": <MessageSquare className="h-4 w-4" />,
 };
