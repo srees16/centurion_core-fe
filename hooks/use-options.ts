@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import type { IndexQuote, OptionChainRow } from "@/lib/types";
+import type { IndexQuote, OptionChainRow, OverlayScanResult } from "@/lib/types";
 
 export function useIndexQuotes() {
   return useQuery({
@@ -25,5 +25,12 @@ export function useOptionExpiries(symbol: string) {
     queryFn: () =>
       api.get<string[]>("/api/v1/options/expiries", { symbol }),
     enabled: !!symbol,
+  });
+}
+
+export function useOverlayScan() {
+  return useMutation({
+    mutationFn: (params?: { symbols?: string[]; capital?: number; regime?: string }) =>
+      api.post<OverlayScanResult>("/api/v1/options/overlay/scan", params ?? {}),
   });
 }

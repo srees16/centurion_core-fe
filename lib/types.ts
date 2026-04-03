@@ -420,6 +420,57 @@ export interface OptionChainRow {
   moneyness?: "ITM" | "ATM" | "OTM";
 }
 
+// ─── Options Overlay Strategies ───────────────────────────────────────────
+export interface OverlayOrder {
+  symbol: string;
+  strike: number;
+  expiry: string;
+  premium: number;
+  total_premium: number;
+  delta: number;
+  iv: number;
+  lots: number;
+  lot_size: number;
+  underlying_price: number;
+}
+
+export interface MultiLegOrder {
+  strategy_type: string;
+  underlying: string;
+  legs: {
+    strike: number;
+    type: string;
+    side: string;
+    lots: number;
+    premium: number;
+    delta: number;
+  }[];
+  net_credit: number;
+  max_loss: number;
+  max_profit: number;
+  pop: number;
+  margin_required: number;
+}
+
+export interface OverlayScanResult {
+  covered_calls: OverlayOrder[];
+  cash_secured_puts: OverlayOrder[];
+  iron_condors: MultiLegOrder[];
+  strangles: MultiLegOrder[];
+  summary: {
+    total_premium: number;
+    overlay_premium: number;
+    multileg_premium: number;
+    monthly_yield_pct: number;
+    annualized_yield_pct: number;
+    covered_call_count: number;
+    csp_count: number;
+    iron_condor_count: number;
+    strangle_count: number;
+  };
+  log: string[];
+}
+
 // ─── Financial ML / Test & Tune ───────────────────────────────────────────
 export interface ChapterInfo {
   key: string;

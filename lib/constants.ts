@@ -70,6 +70,43 @@ export const NASDAQ_50_TICKERS = [
 export const DEFAULT_CRYPTO_TICKERS = ["ETH", "BTC", "LTC"];
 export const DEFAULT_TTS_TICKERS = ["SPY", "QQQ", "IWM", "DIA"];
 
+// ─── NSE Trading Holidays (official calendar, update annually) ───────────
+// Format: "YYYY-MM-DD" — sourced from https://www.nseindia.com/resources/exchange-communication-holidays
+export const NSE_HOLIDAYS: Set<string> = new Set([
+  // 2025
+  "2025-02-26", // Maha Shivaratri
+  "2025-03-14", // Holi
+  "2025-03-31", // Id-Ul-Fitr (Ramadan Eid)
+  "2025-04-10", // Shri Mahavir Jayanti
+  "2025-04-14", // Dr. Baba Saheb Ambedkar Jayanti
+  "2025-04-18", // Good Friday
+  "2025-05-01", // Maharashtra Day
+  "2025-08-15", // Independence Day
+  "2025-08-27", // Ganesh Chaturthi
+  "2025-10-02", // Mahatma Gandhi Jayanti / Dussehra
+  "2025-10-21", // Diwali Laxmi Pujan
+  "2025-10-22", // Diwali-Balipratipada
+  "2025-11-05", // Prakash Gurpurb Sri Guru Nanak Dev
+  "2025-12-25", // Christmas
+  // 2026
+  "2026-01-15", // Municipal Corporation Election - Maharashtra
+  "2026-01-26", // Republic Day
+  "2026-03-03", // Holi
+  "2026-03-26", // Shri Ram Navami
+  "2026-03-31", // Shri Mahavir Jayanti
+  "2026-04-03", // Good Friday
+  "2026-04-14", // Dr. Baba Saheb Ambedkar Jayanti
+  "2026-05-01", // Maharashtra Day
+  "2026-05-28", // Bakri Id
+  "2026-06-26", // Muharram
+  "2026-09-14", // Ganesh Chaturthi
+  "2026-10-02", // Mahatma Gandhi Jayanti
+  "2026-10-20", // Dussehra
+  "2026-11-10", // Diwali-Balipratipada
+  "2026-11-24", // Prakash Gurpurb Sri Guru Nanak Dev
+  "2026-12-25", // Christmas
+]);
+
 // ─── Score Interpretation Ranges ─────────────────────────────────────────
 export const Z_SCORE_RANGES = [
   { label: "Safe", min: 2.99, color: "#00cc44", description: "Low bankruptcy risk" },
@@ -151,6 +188,29 @@ export const TTS_CATEGORIES = [
   "Statistical Testing",
 ];
 
+export const ARONSON_CATEGORIES = [
+  "Signal Testing",
+  "Multi-Test Correction",
+  "Composite Validation",
+];
+
+export const EHLERS_CATEGORIES = [
+  "Smoothing & Trend",
+  "Oscillators",
+  "Adaptive Indicators",
+  "Composite Forecast",
+];
+
+export const VINCE_CATEGORIES = [
+  "Position Sizing",
+  "Portfolio",
+  "Monte Carlo",
+];
+
+export const DEFAULT_ARONSON_TICKERS = ["MSFT", "GOOG", "NVDA", "AMD"];
+export const DEFAULT_EHLERS_TICKERS = ["MSFT", "GOOG", "NVDA", "AMD"];
+export const DEFAULT_VINCE_TICKERS = ["MSFT", "GOOG", "NVDA", "AMD"];
+
 // ─── Nav Routes ──────────────────────────────────────────────────────────
 export const APP_MODULES = [
   { key: "us-stocks", label: "US Stocks", href: "/us-stocks" },
@@ -158,6 +218,9 @@ export const APP_MODULES = [
   { key: "rl-bot", label: "RL Bot", href: "/rl-bot" },
   { key: "financial-ml", label: "Financial ML", href: "/financial-ml" },
   { key: "test-tune", label: "Test & Tune", href: "/test-tune" },
+  { key: "aronson-lab", label: "Aronson Lab", href: "/aronson-lab" },
+  { key: "ehlers-lab", label: "Ehlers DSP", href: "/ehlers-lab" },
+  { key: "vince-lab", label: "Vince Risk", href: "/vince-lab" },
   { key: "crypto", label: "Crypto", href: "/crypto" },
   { key: "rag-engine", label: "RAG Engine", href: "/rag-engine" },
 ] as const;
