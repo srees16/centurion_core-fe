@@ -152,7 +152,7 @@ export default function INDHistoryPage() {
                         { label: "Win Rate", key: "win_rate", fmt: formatPct },
                         { label: "Total Trades", key: "total_trades", fmt: (v: number) => String(v) },
                       ].map(({ label, key, fmt, negative }) => {
-                        const values = compareQ.data!.runs.map((r) => (r as Record<string, unknown>)[key] as number);
+                        const values = compareQ.data!.runs.map((r) => (r as unknown as Record<string, unknown>)[key] as number);
                         const best = negative ? Math.min(...values) : Math.max(...values);
                         return (
                           <tr key={key} className="border-b last:border-0">
