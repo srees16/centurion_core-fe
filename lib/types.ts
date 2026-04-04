@@ -945,3 +945,84 @@ export interface PortfolioRiskSnapshot {
   emergency_liquidate: boolean;
   alerts: string[];
 }
+
+// ─── Trade Monitor (P1) ───────────────────────────────────────────────────
+export interface MonitoredTradeDetail {
+  symbol: string;
+  side: string;
+  quantity: number;
+  entry_price: number;
+  stop_loss: number;
+  target_price: number;
+  entry_order_id: string;
+  sl_order_id: string | null;
+  tp_order_id: string | null;
+  entry_filled: boolean;
+  sl_triggered: boolean;
+  tp_triggered: boolean;
+  closed: boolean;
+  scaled_2r: boolean;
+  scaled_3r: boolean;
+  sl_failed: boolean;
+  opened_at: string;
+  direction: string;
+  product: string;
+  is_active: boolean;
+  unrealised_pnl_pct: number;
+}
+
+export interface TradeMonitorDetail {
+  active_trades: MonitoredTradeDetail[];
+  closed_trades: MonitoredTradeDetail[];
+  total_active: number;
+  total_closed: number;
+}
+
+// ─── Carver Config (P3) ──────────────────────────────────────────────────
+export interface CarverConfig {
+  carver_enabled: boolean;
+  annual_vol_target: number;
+  initial_capital: number;
+  default_idm: number;
+  max_leverage: number;
+  inertia_threshold: number;
+  cost_speed_limit: number;
+  trade_horizon: string;
+  vince_insurance_pct_ind: number;
+  vince_insurance_pct_us: number;
+  vince_regime_shrink_enabled: boolean;
+  dd_warning: number;
+  dd_critical: number;
+  dd_halt: number;
+  max_open_trades: number;
+  vix_caution_threshold: number;
+  vix_panic_threshold: number;
+  nse_universe_tier: string;
+  us_enabled: boolean;
+  us_vol_target: number;
+  us_initial_capital: number;
+  us_idm: number;
+  us_max_leverage: number;
+}
+
+// ─── Backtest Comparison (P2) ────────────────────────────────────────────
+export interface BacktestCompareRun {
+  id: string;
+  strategy_name: string;
+  tickers: string[];
+  total_return: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  max_drawdown: number;
+  calmar: number;
+  win_rate: number;
+  total_trades: number;
+  initial_capital: number;
+  equity_curve: EquityPoint[];
+  created_at: string;
+}
+
+export interface BacktestCompareResponse {
+  runs: BacktestCompareRun[];
+  count: number;
+}
