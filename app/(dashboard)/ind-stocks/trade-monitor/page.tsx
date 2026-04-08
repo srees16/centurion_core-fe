@@ -22,8 +22,10 @@ import {
   Activity, CheckCircle, XCircle, AlertTriangle,
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown,
   BarChart3, Target, Shield, Zap, Calendar, Search,
+  Play, Square, Clock, RefreshCw,
 } from "lucide-react";
 import type { MonitoredTradeDetail } from "@/lib/types";
+import { usePaperTradingState, usePaperTradingToggle } from "@/hooks/use-paper-trading-state";
 
 function TradeBadge({ direction }: { direction: string }) {
   return direction === "LONG" ? (
@@ -107,6 +109,97 @@ function TradeTable({ trades, showPnl }: { trades: MonitoredTradeDetail[]; showP
   );
 }
 
+/* ── Paper Trading Control ──────────────────────────────────────────────── */
+
+function PaperTradingControl() {
+  const stateQ = usePaperTradingState();
+  const toggle = usePaperTradingToggle();
+  const state = stateQ.data;
+
+  const handleStart = () => {
+    if (confirm("Start automated paper trading for 4 weeks?\n\nThe pipeline will run automatically at IST market hours (9:20, 10:30, 12:30, 14:30, 15:35) Mon-Fri via GitHub Actions.\n\nNo local processes needed.")) {
+      toggle.mutate({ action: "start", weeks: 4 });
+    }
+  };
+
+  const handleStop = () => {
+    if (confirm("Stop automated paper trading?\n\nAll existing positions will remain but no new trades will be placed.")) {
+      toggle.mutate({ action: "stop" });
+    }
+  };
+
+  if (stateQ.isLoading) return null;
+
+  const isActive = state?.active ?? false;
+  const expiresAt = state?.expires_at ? new Date(state.expires_at) : null;
+  const startedAt = state?.started_at ? new Date(state.started_at) : null;
+  const lastRunAt = state?.last_run_at ? new Date(state.last_run_at) : null;
+  const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 86400000)) : 0;
+
+  return (
+    <div className={`content-panel p-4 border-l-4 ${isActive ? "border-l-green-500 bg-green-500/5" : "border-l-muted bg-muted/5"}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`h-3 w-3 rounded-full ${isActive ? "bg-green-500 animate-pulse" : "bg-muted-foreground/30"}`} />
+          <div>
+            <h3 className="text-sm font-semibold">
+              {isActive ? "Paper Trading Active" : "Paper Trading Inactive"}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {isActive && startedAt
+                ? `Started ${startedAt.toLocaleDateString()} · ${daysLeft} days remaining · ${state?.total_runs ?? 0} runs completed`
+                : "Fully automated via GitHub Actions — no local processes needed"}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={isActive ? handleStop : handleStart}
+          disabled={toggle.isPending}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            isActive
+              ? "bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
+              : "bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/30"
+          } disabled:opacity-50`}
+        >
+          {toggle.isPending ? (
+            <RefreshCw className="h-4 w-4 animate-spin" />
+          ) : isActive ? (
+            <Square className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+          {isActive ? "Stop Paper Trading" : "Start Paper Trading"}
+        </button>
+      </div>
+
+      {/* Last run status */}
+      {isActive && lastRunAt && (
+        <div className="mt-3 pt-3 border-t border-border/50 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Last run: {lastRunAt.toLocaleString()}
+          </span>
+          <span className={`flex items-center gap-1 ${
+            state?.last_run_status === "success" ? "text-green-500"
+              : state?.last_run_status === "error" ? "text-red-500"
+                : ""
+          }`}>
+            {state?.last_run_status === "success" ? <CheckCircle className="h-3 w-3" /> : null}
+            {state?.last_run_status === "error" ? <XCircle className="h-3 w-3" /> : null}
+            {state?.last_run_status ?? "none"}
+          </span>
+          {state?.last_run_message && (
+            <span className="truncate max-w-[300px]" title={state.last_run_message}>
+              {state.last_run_message}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Paper Validation Section ──────────────────────────────────────────── */
 
 function PaperValidationPanel() {
@@ -129,10 +222,16 @@ function PaperValidationPanel() {
   const isLoading = dashQ.isLoading || snapQ.isLoading;
 
   if (isLoading) return <Spinner />;
-  if (!dash) return <p className="text-sm text-muted-foreground py-4 text-center">No paper trading data yet. Start the scheduler to begin.</p>;
+  if (!dash) return (
+    <div className="space-y-6">
+      <PaperTradingControl />
+      <p className="text-sm text-muted-foreground py-4 text-center">No paper trading data yet. Click &quot;Start Paper Trading&quot; above to begin.</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
+      <PaperTradingControl />
       {/* Performance metrics */}
       <div>
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
