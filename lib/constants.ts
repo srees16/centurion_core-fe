@@ -242,7 +242,6 @@ export const IND_SUB_PAGES = [
   { key: "verdict", label: "Verdict", href: "/ind-stocks/verdict" },
   { key: "backtest", label: "Backtest", href: "/ind-stocks/backtest" },
   { key: "trade-monitor", label: "Trade Monitor", href: "/ind-stocks/trade-monitor" },
-  { key: "paper-trade", label: "Paper Trade", href: "/ind-stocks/paper-trade" },
   { key: "options", label: "Options", href: "/ind-stocks/options" },
   { key: "history", label: "History", href: "/ind-stocks/history" },
 ];
