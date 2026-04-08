@@ -7,6 +7,7 @@ import type {
   DailySnapshotsResponse,
   SignalLogResponse,
   WeeklyCheckpointsResponse,
+  DailyDetailResponse,
 } from "@/lib/types";
 
 export function useTradeMonitorSummary() {
@@ -53,6 +54,15 @@ export function useWeeklyCheckpoints() {
   return useQuery({
     queryKey: ["weekly-checkpoints"],
     queryFn: () => api.get<WeeklyCheckpointsResponse>("/api/v1/screener/monitor/weekly-checkpoints"),
+    refetchInterval: 120_000,
+  });
+}
+
+export function useDailyDetail(date: string | null) {
+  return useQuery({
+    queryKey: ["daily-detail", date],
+    queryFn: () => api.get<DailyDetailResponse>(`/api/v1/screener/monitor/daily-detail/${date}`),
+    enabled: !!date,
     refetchInterval: 120_000,
   });
 }
