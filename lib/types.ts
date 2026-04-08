@@ -978,6 +978,92 @@ export interface TradeMonitorDetail {
   total_closed: number;
 }
 
+// ─── Paper Validation Checkpoint Types ───────────────────────────────────
+export interface PaperDashboard {
+  initial_capital: number;
+  current_capital: number;
+  open_positions: number;
+  closed_trades: number;
+  total_pnl: number;
+  total_pnl_pct: number;
+  win_rate: number;
+  avg_win_pct: number;
+  avg_loss_pct: number;
+  max_drawdown_pct: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  calmar_ratio: number;
+  omega_ratio: number;
+  cvar_95: number;
+  profit_factor: number;
+  positions: Record<string, unknown>[];
+}
+
+export interface DailySnapshot {
+  date: string;
+  equity: number;
+  cash: number;
+  open_positions: number;
+  closed_today: number;
+  day_pnl: number;
+  cumulative_pnl: number;
+  cumulative_pnl_pct: number;
+  max_drawdown_pct: number;
+  signals_generated: number;
+  signals_traded: number;
+}
+
+export interface DailySnapshotsResponse {
+  snapshots: DailySnapshot[];
+  count: number;
+}
+
+export interface SignalLogEntry {
+  id: number;
+  date: string;
+  symbol: string;
+  forecast: number;
+  combined_forecast: number;
+  action: string;
+  entry_price: number;
+  stop_loss: number;
+  target_price: number;
+  quantity: number;
+  pipeline_sources: string;
+  was_traded: number;
+}
+
+export interface SignalLogResponse {
+  signals: SignalLogEntry[];
+  count: number;
+  summary: {
+    total_signals: number;
+    traded_signals: number;
+    hit_rate: number;
+  };
+  daily_stats: { date: string; total_signals: number; traded_signals: number }[];
+}
+
+export interface WeeklyCheckpoint {
+  week_number: number;
+  week_start: string;
+  week_end: string;
+  start_equity: number;
+  end_equity: number;
+  week_return_pct: number;
+  trades_opened: number;
+  trades_closed: number;
+  win_rate: number;
+  sharpe_ratio: number;
+  max_dd_pct: number;
+  avg_holding_days: number;
+}
+
+export interface WeeklyCheckpointsResponse {
+  checkpoints: WeeklyCheckpoint[];
+  count: number;
+}
+
 // ─── Carver Config (P3) ──────────────────────────────────────────────────
 export interface CarverConfig {
   carver_enabled: boolean;
