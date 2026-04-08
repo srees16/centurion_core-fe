@@ -1064,6 +1064,22 @@ export interface WeeklyCheckpointsResponse {
   count: number;
 }
 
+// ─── Daily Detail Drill-down ─────────────────────────────────────────────
+export interface DailyDetailResponse {
+  date: string;
+  snapshot: DailySnapshot | null;
+  snapshot_detail: Record<string, unknown>;
+  signals: SignalLogEntry[];
+  total_signals: number;
+  traded_signals: number;
+  skipped_signals: number;
+  trades_opened: Record<string, unknown>[];
+  trades_opened_count: number;
+  trades_closed: Record<string, unknown>[];
+  trades_closed_count: number;
+  exit_reasons: Record<string, number>;
+}
+
 // ─── Carver Config (P3) ──────────────────────────────────────────────────
 export interface CarverConfig {
   carver_enabled: boolean;
