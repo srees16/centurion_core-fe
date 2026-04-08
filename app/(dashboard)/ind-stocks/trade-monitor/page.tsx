@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
 import { RibbonVixBar } from "@/components/common/ribbon-vix-bar";
@@ -14,12 +15,13 @@ import {
   useDailySnapshots,
   useSignalLog,
   useWeeklyCheckpoints,
+  useDailyDetail,
 } from "@/hooks/use-trade-monitor";
 import { formatCurrency, formatPct, formatNumber } from "@/lib/utils";
 import {
   Activity, CheckCircle, XCircle, AlertTriangle,
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown,
-  BarChart3, Target, Shield, Zap,
+  BarChart3, Target, Shield, Zap, Calendar, Search,
 } from "lucide-react";
 import type { MonitoredTradeDetail } from "@/lib/types";
 
@@ -148,6 +150,8 @@ function PaperValidationPanel() {
           <MetricCard label="Total P&L" value={formatCurrency(dash.total_pnl, "INR")} color={dash.total_pnl >= 0 ? "pnl-positive" : "pnl-negative"} />
           <MetricCard label="Sharpe Ratio" value={dash.sharpe_ratio.toFixed(3)} color={dash.sharpe_ratio >= 0.5 ? "text-green-500" : dash.sharpe_ratio >= 0 ? "text-amber-500" : "text-red-500"} />
           <MetricCard label="Sortino" value={dash.sortino_ratio.toFixed(3)} />
+          <MetricCard label="Calmar" value={dash.calmar_ratio.toFixed(3)} />
+          <MetricCard label="Omega" value={dash.omega_ratio.toFixed(3)} />
           <MetricCard label="Max Drawdown" value={formatPct(dash.max_drawdown_pct)} color={dash.max_drawdown_pct > 20 ? "text-red-500" : "text-amber-500"} />
           <MetricCard label="Win Rate" value={formatPct(dash.win_rate * 100, 0)} color={dash.win_rate >= 0.5 ? "text-green-500" : "text-red-500"} />
           <MetricCard label="Profit Factor" value={dash.profit_factor.toFixed(2)} />
@@ -335,8 +339,274 @@ function PaperValidationPanel() {
 
 /* ── Main Page ─────────────────────────────────────────────────────────── */
 
+function DailyDetailPanel() {
+  const snapQ = useDailySnapshots();
+  const dates = (snapQ.data?.snapshots ?? []).map((s) => s.date).sort().reverse();
+  const [selectedDate, setSelectedDate] = useState<string | null>(dates[0] ?? null);
+  const detailQ = useDailyDetail(selectedDate);
+  const d = detailQ.data;
+
+  // Update selected date when snapshots load
+  if (!selectedDate && dates.length > 0) {
+    setSelectedDate(dates[0]);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Date selector */}
+      <div className="content-panel p-4">
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <Calendar className="h-4 w-4" /> Select Trading Day
+        </h3>
+        {dates.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No snapshots recorded yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {dates.slice(0, 28).map((dt) => (
+              <button
+                key={dt}
+                onClick={() => setSelectedDate(dt)}
+                className={`px-3 py-1.5 text-xs font-mono rounded-md border transition-colors ${
+                  dt === selectedDate
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background hover:bg-accent border-border"
+                }`}
+              >
+                {dt}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {detailQ.isLoading && <Spinner />}
+
+      {d && (
+        <>
+          {/* Day KPIs */}
+          {d.snapshot && (
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" /> Day Snapshot — {d.date}
+              </h3>
+              <MetricsGrid>
+                <MetricCard label="Equity" value={formatCurrency(d.snapshot.equity, "INR")} />
+                <MetricCard label="Cash" value={formatCurrency(d.snapshot.cash, "INR")} />
+                <MetricCard
+                  label="Day P&L"
+                  value={formatCurrency(d.snapshot.day_pnl, "INR")}
+                  color={d.snapshot.day_pnl >= 0 ? "pnl-positive" : "pnl-negative"}
+                />
+                <MetricCard
+                  label="Cumulative P&L"
+                  value={formatPct(d.snapshot.cumulative_pnl_pct)}
+                  color={d.snapshot.cumulative_pnl_pct >= 0 ? "pnl-positive" : "pnl-negative"}
+                />
+                <MetricCard label="Signals Generated" value={d.total_signals} />
+                <MetricCard label="Signals Traded" value={d.traded_signals} color="text-blue-500" />
+                <MetricCard label="Open Positions" value={d.snapshot.open_positions} />
+                <MetricCard label="Closed Today" value={d.snapshot.closed_today} />
+              </MetricsGrid>
+            </div>
+          )}
+
+          {/* Advanced metrics from snapshot_detail */}
+          {d.snapshot_detail && Object.keys(d.snapshot_detail).length > 0 && (
+            <div className="content-panel p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Target className="h-4 w-4" /> Advanced Metrics
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {[
+                  { key: "sharpe_ratio", label: "Sharpe" },
+                  { key: "sortino_ratio", label: "Sortino" },
+                  { key: "calmar_ratio", label: "Calmar" },
+                  { key: "omega_ratio", label: "Omega" },
+                  { key: "profit_factor", label: "Profit Factor" },
+                  { key: "win_rate", label: "Win Rate" },
+                  { key: "max_drawdown_pct", label: "Max DD %" },
+                  { key: "cvar_95", label: "CVaR 95" },
+                ].map(({ key, label }) => {
+                  const val = d.snapshot_detail[key];
+                  if (val == null) return null;
+                  const num = typeof val === "number" ? val : parseFloat(String(val));
+                  return (
+                    <div key={key} className="text-center p-2 rounded bg-accent/30">
+                      <p className="text-lg font-bold font-mono">
+                        {key.includes("rate") || key.includes("pct") || key.includes("drawdown")
+                          ? `${(num * (key === "win_rate" ? 100 : 1)).toFixed(1)}%`
+                          : num.toFixed(3)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Signals table */}
+          {d.signals.length > 0 && (
+            <div className="content-panel p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Zap className="h-4 w-4" /> Signals — {d.total_signals} generated, {d.traded_signals} traded, {d.skipped_signals} skipped
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="py-1 pr-2">Symbol</th>
+                      <th className="py-1 pr-2 text-right">Forecast</th>
+                      <th className="py-1 pr-2">Action</th>
+                      <th className="py-1 pr-2 text-right">Entry</th>
+                      <th className="py-1 pr-2 text-right">SL</th>
+                      <th className="py-1 pr-2 text-right">TP</th>
+                      <th className="py-1 pr-2 text-right">Qty</th>
+                      <th className="py-1 pr-2">Sources</th>
+                      <th className="py-1 pr-2">Traded</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.signals.map((s, i) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="py-1 pr-2 font-mono font-medium">{s.symbol}</td>
+                        <td className="py-1 pr-2 text-right">{s.combined_forecast.toFixed(1)}</td>
+                        <td className="py-1 pr-2">{s.action}</td>
+                        <td className="py-1 pr-2 text-right">{formatNumber(s.entry_price)}</td>
+                        <td className="py-1 pr-2 text-right text-red-500">{formatNumber(s.stop_loss)}</td>
+                        <td className="py-1 pr-2 text-right text-green-500">{formatNumber(s.target_price)}</td>
+                        <td className="py-1 pr-2 text-right">{s.quantity}</td>
+                        <td className="py-1 pr-2">
+                          <div className="flex flex-wrap gap-0.5">
+                            {s.pipeline_sources.split(",").map((src, j) => (
+                              <span key={j} className="inline-block rounded bg-accent px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                {src.trim()}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-1 pr-2">
+                          {s.was_traded ? (
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <XCircle className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Trades opened */}
+          {d.trades_opened_count > 0 && (
+            <div className="content-panel p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <ArrowUpRight className="h-4 w-4 text-green-500" /> Trades Opened ({d.trades_opened_count})
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="py-1 pr-2">Symbol</th>
+                      <th className="py-1 pr-2">Side</th>
+                      <th className="py-1 pr-2 text-right">Qty</th>
+                      <th className="py-1 pr-2 text-right">Entry</th>
+                      <th className="py-1 pr-2 text-right">SL</th>
+                      <th className="py-1 pr-2 text-right">TP</th>
+                      <th className="py-1 pr-2">Opened At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.trades_opened.map((t, i) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="py-1 pr-2 font-mono font-medium">{String(t.symbol ?? "")}</td>
+                        <td className="py-1 pr-2">{String(t.side ?? "LONG")}</td>
+                        <td className="py-1 pr-2 text-right">{String(t.quantity ?? "")}</td>
+                        <td className="py-1 pr-2 text-right">{formatNumber(Number(t.entry_price ?? 0))}</td>
+                        <td className="py-1 pr-2 text-right text-red-500">{formatNumber(Number(t.stop_loss ?? 0))}</td>
+                        <td className="py-1 pr-2 text-right text-green-500">{formatNumber(Number(t.target_price ?? 0))}</td>
+                        <td className="py-1 pr-2 text-xs text-muted-foreground">{String(t.opened_at ?? "")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Trades closed / SL-TP events */}
+          {d.trades_closed_count > 0 && (
+            <div className="content-panel p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-red-500" /> Trades Closed / SL-TP Events ({d.trades_closed_count})
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="py-1 pr-2">Symbol</th>
+                      <th className="py-1 pr-2">Exit Reason</th>
+                      <th className="py-1 pr-2 text-right">Entry</th>
+                      <th className="py-1 pr-2 text-right">Exit</th>
+                      <th className="py-1 pr-2 text-right">P&L</th>
+                      <th className="py-1 pr-2 text-right">P&L %</th>
+                      <th className="py-1 pr-2">Closed At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.trades_closed.map((t, i) => {
+                      const pnl = Number(t.pnl ?? 0);
+                      const pnlPct = Number(t.pnl_pct ?? 0);
+                      return (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="py-1 pr-2 font-mono font-medium">{String(t.symbol ?? "")}</td>
+                          <td className="py-1 pr-2">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                              String(t.exit_reason ?? "").includes("SL") ? "bg-red-500/10 text-red-500"
+                                : String(t.exit_reason ?? "").includes("TP") ? "bg-green-500/10 text-green-500"
+                                  : "bg-muted text-muted-foreground"
+                            }`}>
+                              {String(t.exit_reason ?? "—")}
+                            </span>
+                          </td>
+                          <td className="py-1 pr-2 text-right">{formatNumber(Number(t.entry_price ?? 0))}</td>
+                          <td className="py-1 pr-2 text-right">{formatNumber(Number(t.exit_price ?? 0))}</td>
+                          <td className={`py-1 pr-2 text-right font-medium ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            {formatCurrency(pnl, "INR")}
+                          </td>
+                          <td className={`py-1 pr-2 text-right ${pnlPct >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            {pnlPct > 0 ? "+" : ""}{pnlPct.toFixed(1)}%
+                          </td>
+                          <td className="py-1 pr-2 text-xs text-muted-foreground">{String(t.closed_at ?? "")}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!d.snapshot && d.signals.length === 0 && d.trades_opened_count === 0 && d.trades_closed_count === 0 && (
+            <div className="content-panel p-6 text-center text-muted-foreground">
+              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No activity recorded for {d.date}</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function TradeMonitorPage() {
-  const [tab, setTab] = useState("active");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") === "paper" ? "validation" : "active";
+  const [tab, setTab] = useState(initialTab);
   const summaryQ = useTradeMonitorSummary();
   const tradesQ = useTradeMonitorTrades();
 
@@ -377,6 +647,9 @@ export default function TradeMonitorPage() {
           <TabsTrigger value="validation">
             Paper Validation
           </TabsTrigger>
+          <TabsTrigger value="daily-detail">
+            Daily Detail
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
@@ -397,6 +670,10 @@ export default function TradeMonitorPage() {
 
         <TabsContent value="validation" className="mt-4">
           <PaperValidationPanel />
+        </TabsContent>
+
+        <TabsContent value="daily-detail" className="mt-4">
+          <DailyDetailPanel />
         </TabsContent>
       </Tabs>
     </div>
