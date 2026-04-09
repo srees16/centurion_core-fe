@@ -160,6 +160,79 @@ export interface EquityPoint {
   drawdown: number;
 }
 
+// ─── Portfolio (Dual-Strategy) ────────────────────────────────────────────
+
+export interface HarvestParams {
+  inject_pct: number;
+  book_pct: number;
+  sustain_days: number;
+  min_gain_to_book: number;
+  inject_cooldown_days: number;
+  preset?: string;
+}
+
+export interface PortfolioBacktestRequest {
+  total_capital: number;
+  compounder_pct: number;
+  harvest_params?: HarvestParams;
+  start_date: string;
+  end_date: string;
+}
+
+export interface PortfolioEquityPoint {
+  day: number;
+  equity: number;
+}
+
+export interface PortfolioHarvestEvent {
+  day: number;
+  amount: number;
+  equity_before: number;
+  equity_after: number;
+  event_type: "inject" | "book";
+}
+
+export interface StrategyMetrics {
+  strategy_name: string;
+  capital_allocated: number;
+  final_equity: number;
+  sharpe: number;
+  sortino: number;
+  calmar: number;
+  cagr_pct: number;
+  max_drawdown_pct: number;
+  total_return_pct: number;
+  total_trades: number;
+  win_rate: number;
+  profit_factor: number;
+}
+
+export interface HarvestSummary {
+  total_injected: number;
+  total_booked: number;
+  net_extracted: number;
+  inject_events: PortfolioHarvestEvent[];
+  book_events: PortfolioHarvestEvent[];
+}
+
+export interface PortfolioBacktestResponse {
+  total_capital: number;
+  compounder_pct: number;
+  harvest_pct: number;
+  compounder: StrategyMetrics;
+  harvest: StrategyMetrics;
+  combined_wealth: number;
+  combined_return_pct: number;
+  compounder_equity: PortfolioEquityPoint[];
+  harvest_equity: PortfolioEquityPoint[];
+  harvest_summary?: HarvestSummary;
+  execution_time_sec: number;
+}
+
+export interface HarvestPresets {
+  presets: Record<string, HarvestParams>;
+}
+
 // ─── Verdict ──────────────────────────────────────────────────────────────
 
 export type RegimeLabel = "TRENDING_BULL" | "TRENDING_BEAR" | "RANGE_BOUND" | "HIGH_VOLATILITY" | "CRISIS";
