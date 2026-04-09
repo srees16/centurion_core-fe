@@ -219,6 +219,14 @@ function PaperValidationPanel() {
     drawdown: s.max_drawdown_pct,
   }));
 
+  // Compute annualised CAGR from snapshots
+  const tradingDays = snapshots.length;
+  const years = tradingDays / 252;
+  const cagrPct =
+    years > 0 && dash
+      ? ((dash.current_capital / dash.initial_capital) ** (1 / years) - 1) * 100
+      : 0;
+
   const isLoading = dashQ.isLoading || snapQ.isLoading;
 
   if (isLoading) return <Spinner />;
@@ -247,6 +255,7 @@ function PaperValidationPanel() {
             color={dash.total_pnl_pct >= 0 ? "pnl-positive" : "pnl-negative"}
           />
           <MetricCard label="Total P&L" value={formatCurrency(dash.total_pnl, "INR")} color={dash.total_pnl >= 0 ? "pnl-positive" : "pnl-negative"} />
+          <MetricCard label="CAGR (annualised)" value={formatPct(cagrPct)} color={cagrPct >= 0 ? "pnl-positive" : "pnl-negative"} />
           <MetricCard label="Sharpe Ratio" value={dash.sharpe_ratio.toFixed(3)} color={dash.sharpe_ratio >= 0.5 ? "text-green-500" : dash.sharpe_ratio >= 0 ? "text-amber-500" : "text-red-500"} />
           <MetricCard label="Sortino" value={dash.sortino_ratio.toFixed(3)} />
           <MetricCard label="Calmar" value={dash.calmar_ratio.toFixed(3)} />
