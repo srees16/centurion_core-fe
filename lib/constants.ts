@@ -243,6 +243,7 @@ export const IND_SUB_PAGES = [
   { key: "backtest", label: "Backtest", href: "/ind-stocks/backtest" },
   { key: "trade-monitor", label: "Trade Monitor", href: "/ind-stocks/trade-monitor" },
   { key: "options", label: "Options", href: "/ind-stocks/options" },
+  { key: "portfolio", label: "Portfolio", href: "/ind-stocks/portfolio" },
   { key: "history", label: "History", href: "/ind-stocks/history" },
 ];
 
