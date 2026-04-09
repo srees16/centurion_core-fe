@@ -156,18 +156,18 @@ function PaperTradingControl() {
         <button
           onClick={isActive ? handleStop : handleStart}
           disabled={toggle.isPending}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
             isActive
               ? "bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
               : "bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/30"
           } disabled:opacity-50`}
         >
           {toggle.isPending ? (
-            <RefreshCw className="h-4 w-4 animate-spin" />
+            <RefreshCw className="h-3 w-3 animate-spin" />
           ) : isActive ? (
-            <Square className="h-4 w-4" />
+            <Square className="h-3 w-3" />
           ) : (
-            <Play className="h-4 w-4" />
+            <Play className="h-3 w-3" />
           )}
           {isActive ? "Stop Paper Trading" : "Start Paper Trading"}
         </button>
