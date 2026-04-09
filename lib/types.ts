@@ -233,6 +233,58 @@ export interface HarvestPresets {
   presets: Record<string, HarvestParams>;
 }
 
+// ─── R22: Bull-Run Capital Infusion ───────────────────────────────────────
+
+export interface R22InfusionEvent {
+  day: number;
+  amount: number;
+  equity_before: number;
+  equity_after: number;
+}
+
+export interface R22AlertEvent {
+  day: number;
+  date: string;
+}
+
+export interface R22BacktestRequest {
+  capital: number;
+  infuse: boolean;
+  infusion_amount: number;
+  cooldown_days: number;
+  bull_confirm_days: number;
+  start_date: string;
+  end_date: string;
+}
+
+export interface R22BacktestMetrics {
+  sharpe: number;
+  sortino: number;
+  calmar: number;
+  cagr_pct: number;
+  max_drawdown_pct: number;
+  total_return_pct: number;
+  total_trades: number;
+  win_rate: number;
+  profit_factor: number;
+}
+
+export interface R22BacktestResponse {
+  metrics: R22BacktestMetrics;
+  r21a_benchmark: R22BacktestMetrics;
+  infusion_summary: {
+    enabled: boolean;
+    infusion_amount: number;
+    total_infused: number;
+    n_alerts: number;
+    n_infusions: number;
+    alert_events: R22AlertEvent[];
+    infusion_events: R22InfusionEvent[];
+  };
+  daily_equity: number[];
+  r21a_daily_equity: number[];
+}
+
 // ─── Verdict ──────────────────────────────────────────────────────────────
 
 export type RegimeLabel = "TRENDING_BULL" | "TRENDING_BEAR" | "RANGE_BOUND" | "HIGH_VOLATILITY" | "CRISIS";

@@ -244,6 +244,7 @@ export const IND_SUB_PAGES = [
   { key: "trade-monitor", label: "Trade Monitor", href: "/ind-stocks/trade-monitor" },
   { key: "options", label: "Options", href: "/ind-stocks/options" },
   { key: "portfolio", label: "Portfolio", href: "/ind-stocks/portfolio" },
+  { key: "r22-infusion", label: "R22 Infusion", href: "/ind-stocks/r22-infusion" },
   { key: "history", label: "History", href: "/ind-stocks/history" },
 ];
 
