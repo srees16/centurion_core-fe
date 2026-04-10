@@ -156,9 +156,9 @@ function PaperTradingControl() {
         <button
           onClick={isActive ? handleStop : handleStart}
           disabled={toggle.isPending}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-all ${
             isActive
-              ? "bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
+              ? "bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-600 border border-border hover:border-red-500/30"
               : "bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/30"
           } disabled:opacity-50`}
         >
@@ -271,82 +271,7 @@ function PaperValidationPanel() {
         </MetricsGrid>
       </div>
 
-      {/* Equity curve */}
-      {equityData.length > 0 && (
-        <div className="content-panel p-4">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" /> Equity Curve
-          </h3>
-          <EquityCurveChart data={equityData} height={300} />
-        </div>
-      )}
-
-      {/* Daily drawdown bar */}
-      {snapshots.length > 0 && (
-        <div className="content-panel p-4">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <TrendingDown className="h-4 w-4" /> Daily P&L
-          </h3>
-          <div className="flex items-end gap-[2px] h-24">
-            {snapshots.slice(-30).map((s) => {
-              const maxAbs = Math.max(...snapshots.slice(-30).map((x) => Math.abs(x.day_pnl)), 1);
-              const h = Math.abs(s.day_pnl) / maxAbs * 80;
-              return (
-                <div
-                  key={s.date}
-                  title={`${s.date}: ${formatCurrency(s.day_pnl, "INR")}`}
-                  className={`flex-1 min-w-[3px] rounded-t ${s.day_pnl >= 0 ? "bg-green-500" : "bg-red-500"}`}
-                  style={{ height: `${Math.max(h, 2)}px`, alignSelf: "flex-end" }}
-                />
-              );
-            })}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">Last 30 trading days — hover for details</p>
-        </div>
-      )}
-
-      {/* Weekly checkpoints */}
-      {weeks.length > 0 && (
-        <div className="content-panel p-4">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <Shield className="h-4 w-4" /> Weekly Checkpoints
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Week</th>
-                  <th className="py-2 pr-3 font-medium">Period</th>
-                  <th className="py-2 pr-3 font-medium text-right">Return</th>
-                  <th className="py-2 pr-3 font-medium text-right">Sharpe</th>
-                  <th className="py-2 pr-3 font-medium text-right">Max DD</th>
-                  <th className="py-2 pr-3 font-medium text-right">Trades</th>
-                  <th className="py-2 pr-3 font-medium text-right">Win Rate</th>
-                  <th className="py-2 pr-3 font-medium text-right">Avg Hold</th>
-                </tr>
-              </thead>
-              <tbody>
-                {weeks.map((w) => (
-                  <tr key={w.week_number} className="border-b last:border-0 hover:bg-accent/50">
-                    <td className="py-2 pr-3 font-medium">W{w.week_number}</td>
-                    <td className="py-2 pr-3 text-xs">{w.week_start} → {w.week_end}</td>
-                    <td className={`py-2 pr-3 text-right font-medium ${w.week_return_pct >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {formatPct(w.week_return_pct)}
-                    </td>
-                    <td className="py-2 pr-3 text-right">{w.sharpe_ratio.toFixed(2)}</td>
-                    <td className="py-2 pr-3 text-right text-red-500">{formatPct(w.max_dd_pct)}</td>
-                    <td className="py-2 pr-3 text-right">{w.trades_closed}/{w.trades_opened}</td>
-                    <td className="py-2 pr-3 text-right">{(w.win_rate * 100).toFixed(0)}%</td>
-                    <td className="py-2 pr-3 text-right">{w.avg_holding_days.toFixed(1)}d</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Signal audit */}
+      {/* Signal audit — above equity curve for quick actionability */}
       {signals && signals.summary.total_signals > 0 && (
         <div className="content-panel p-4">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -416,6 +341,81 @@ function PaperValidationPanel() {
               </div>
             </details>
           )}
+        </div>
+      )}
+
+      {/* Daily P&L bar chart — above equity curve */}
+      {snapshots.length > 0 && (
+        <div className="content-panel p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <TrendingDown className="h-4 w-4" /> Daily P&L
+          </h3>
+          <div className="flex items-end gap-[2px] h-24">
+            {snapshots.slice(-30).map((s) => {
+              const maxAbs = Math.max(...snapshots.slice(-30).map((x) => Math.abs(x.day_pnl)), 1);
+              const h = Math.abs(s.day_pnl) / maxAbs * 80;
+              return (
+                <div
+                  key={s.date}
+                  title={`${s.date}: ${formatCurrency(s.day_pnl, "INR")}`}
+                  className={`flex-1 min-w-[3px] rounded-t ${s.day_pnl >= 0 ? "bg-green-500" : "bg-red-500"}`}
+                  style={{ height: `${Math.max(h, 2)}px`, alignSelf: "flex-end" }}
+                />
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Last 30 trading days — hover for details</p>
+        </div>
+      )}
+
+      {/* Equity curve */}
+      {equityData.length > 0 && (
+        <div className="content-panel p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" /> Equity Curve
+          </h3>
+          <EquityCurveChart data={equityData} height={300} />
+        </div>
+      )}
+
+      {/* Weekly checkpoints */}
+      {weeks.length > 0 && (
+        <div className="content-panel p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Shield className="h-4 w-4" /> Weekly Checkpoints
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="py-2 pr-3 font-medium">Week</th>
+                  <th className="py-2 pr-3 font-medium">Period</th>
+                  <th className="py-2 pr-3 font-medium text-right">Return</th>
+                  <th className="py-2 pr-3 font-medium text-right">Sharpe</th>
+                  <th className="py-2 pr-3 font-medium text-right">Max DD</th>
+                  <th className="py-2 pr-3 font-medium text-right">Trades</th>
+                  <th className="py-2 pr-3 font-medium text-right">Win Rate</th>
+                  <th className="py-2 pr-3 font-medium text-right">Avg Hold</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weeks.map((w) => (
+                  <tr key={w.week_number} className="border-b last:border-0 hover:bg-accent/50">
+                    <td className="py-2 pr-3 font-medium">W{w.week_number}</td>
+                    <td className="py-2 pr-3 text-xs">{w.week_start} → {w.week_end}</td>
+                    <td className={`py-2 pr-3 text-right font-medium ${w.week_return_pct >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      {formatPct(w.week_return_pct)}
+                    </td>
+                    <td className="py-2 pr-3 text-right">{w.sharpe_ratio.toFixed(2)}</td>
+                    <td className="py-2 pr-3 text-right text-red-500">{formatPct(w.max_dd_pct)}</td>
+                    <td className="py-2 pr-3 text-right">{w.trades_closed}/{w.trades_opened}</td>
+                    <td className="py-2 pr-3 text-right">{(w.win_rate * 100).toFixed(0)}%</td>
+                    <td className="py-2 pr-3 text-right">{w.avg_holding_days.toFixed(1)}d</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
