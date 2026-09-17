@@ -24,8 +24,9 @@ import {
   BarChart3, Target, Shield, Zap, Calendar, Search,
   Play, Square, Clock, RefreshCw,
 } from "lucide-react";
-import type { MonitoredTradeDetail } from "@/lib/types";
+import type { MonitoredTradeDetail, SignalLogEntry, WeeklyCheckpoint } from "@/lib/types";
 import { usePaperTradingState, usePaperTradingToggle } from "@/hooks/use-paper-trading-state";
+import { SortableTh, timeValue, useSortableRows } from "@/components/tables/sortable";
 
 function TradeBadge({ direction }: { direction: string }) {
   return direction === "LONG" ? (
@@ -55,34 +56,63 @@ function StatusBadge({ trade }: { trade: MonitoredTradeDetail }) {
   return <span className="inline-flex items-center gap-1 text-xs text-blue-500"><Activity className="h-3 w-3" /> Active</span>;
 }
 
+function tradeStatus(t: MonitoredTradeDetail): string {
+  if (!t.entry_filled) return "Pending";
+  if (t.sl_triggered) return "SL Hit";
+  if (t.tp_triggered) return "TP Hit";
+  if (t.closed) return "Closed";
+  return "Active";
+}
+
+function rewardToRisk(t: MonitoredTradeDetail): number | null {
+  const risk = Math.abs(t.entry_price - t.stop_loss);
+  return risk > 0 ? Math.abs(t.target_price - t.entry_price) / risk : null;
+}
+
+const TRADE_SORT = {
+  symbol: (t: MonitoredTradeDetail) => t.symbol,
+  side: (t: MonitoredTradeDetail) => t.direction,
+  status: (t: MonitoredTradeDetail) => tradeStatus(t),
+  qty: (t: MonitoredTradeDetail) => t.quantity,
+  entry: (t: MonitoredTradeDetail) => t.entry_price,
+  sl: (t: MonitoredTradeDetail) => t.stop_loss,
+  target: (t: MonitoredTradeDetail) => t.target_price,
+  rr: rewardToRisk,
+  pnl: (t: MonitoredTradeDetail) => t.unrealised_pnl_pct,
+  product: (t: MonitoredTradeDetail) => t.product,
+  opened: (t: MonitoredTradeDetail) => timeValue(t.opened_at),
+};
+
 function TradeTable({ trades, showPnl }: { trades: MonitoredTradeDetail[]; showPnl?: boolean }) {
+  const { rows, sort } = useSortableRows(trades, TRADE_SORT);
+
   if (trades.length === 0) {
     return <p className="text-sm text-muted-foreground py-4 text-center">No trades found</p>;
   }
 
+  const th = "py-2 pr-3 font-medium";
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2 pr-3 font-medium">Symbol</th>
-            <th className="py-2 pr-3 font-medium">Side</th>
-            <th className="py-2 pr-3 font-medium">Status</th>
-            <th className="py-2 pr-3 font-medium text-right">Qty</th>
-            <th className="py-2 pr-3 font-medium text-right">Entry</th>
-            <th className="py-2 pr-3 font-medium text-right">Stop Loss</th>
-            <th className="py-2 pr-3 font-medium text-right">Target</th>
-            <th className="py-2 pr-3 font-medium text-right">R:R</th>
-            {showPnl && <th className="py-2 pr-3 font-medium text-right">P&L %</th>}
-            <th className="py-2 pr-3 font-medium">Product</th>
-            <th className="py-2 font-medium">Opened</th>
+            <SortableTh label="Symbol" sortKey="symbol" sort={sort} className={th} />
+            <SortableTh label="Side" sortKey="side" sort={sort} className={th} />
+            <SortableTh label="Status" sortKey="status" sort={sort} className={th} />
+            <SortableTh label="Qty" sortKey="qty" sort={sort} align="right" className={th} />
+            <SortableTh label="Entry" sortKey="entry" sort={sort} align="right" className={th} />
+            <SortableTh label="Stop Loss" sortKey="sl" sort={sort} align="right" className={th} />
+            <SortableTh label="Target" sortKey="target" sort={sort} align="right" className={th} />
+            <SortableTh label="R:R" sortKey="rr" sort={sort} align="right" className={th} />
+            {showPnl && <SortableTh label="P&L %" sortKey="pnl" sort={sort} align="right" className={th} />}
+            <SortableTh label="Product" sortKey="product" sort={sort} className={th} />
+            <SortableTh label="Opened" sortKey="opened" sort={sort} className="py-2 font-medium" />
           </tr>
         </thead>
         <tbody>
-          {trades.map((t) => {
-            const risk = Math.abs(t.entry_price - t.stop_loss);
-            const reward = Math.abs(t.target_price - t.entry_price);
-            const rr = risk > 0 ? (reward / risk).toFixed(1) : "—";
+          {rows.map((t) => {
+            const ratio = rewardToRisk(t);
+            const rr = ratio === null ? "—" : ratio.toFixed(1);
             return (
               <tr key={t.entry_order_id} className="border-b last:border-0 hover:bg-accent/50 transition-colors">
                 <td className="py-2 pr-3 font-mono font-medium">{t.symbol}</td>
@@ -100,6 +130,238 @@ function TradeTable({ trades, showPnl }: { trades: MonitoredTradeDetail[]; showP
                 )}
                 <td className="py-2 pr-3 text-xs">{t.product}</td>
                 <td className="py-2 text-xs text-muted-foreground">{new Date(t.opened_at).toLocaleString()}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ── Sortable detail tables ────────────────────────────────────────────── */
+
+const SIGNAL_SORT = {
+  date: (s: SignalLogEntry) => s.date,
+  symbol: (s: SignalLogEntry) => s.symbol,
+  forecast: (s: SignalLogEntry) => s.combined_forecast,
+  action: (s: SignalLogEntry) => s.action,
+  entry: (s: SignalLogEntry) => s.entry_price,
+  sl: (s: SignalLogEntry) => s.stop_loss,
+  tp: (s: SignalLogEntry) => s.target_price,
+  qty: (s: SignalLogEntry) => s.quantity,
+  sources: (s: SignalLogEntry) => s.pipeline_sources,
+  traded: (s: SignalLogEntry) => s.was_traded,
+};
+
+function SignalTable({ signals, showDate, showSources }: { signals: SignalLogEntry[]; showDate?: boolean; showSources?: boolean }) {
+  const { rows, sort } = useSortableRows(signals, SIGNAL_SORT);
+  const th = "py-1 pr-2";
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            {showDate && <SortableTh label="Date" sortKey="date" sort={sort} className={th} />}
+            <SortableTh label="Symbol" sortKey="symbol" sort={sort} className={th} />
+            <SortableTh label="Forecast" sortKey="forecast" sort={sort} align="right" className={th} />
+            <SortableTh label="Action" sortKey="action" sort={sort} className={th} />
+            <SortableTh label="Entry" sortKey="entry" sort={sort} align="right" className={th} />
+            <SortableTh label="SL" sortKey="sl" sort={sort} align="right" className={th} />
+            <SortableTh label="TP" sortKey="tp" sort={sort} align="right" className={th} />
+            <SortableTh label="Qty" sortKey="qty" sort={sort} align="right" className={th} />
+            {showSources && <SortableTh label="Sources" sortKey="sources" sort={sort} className={th} />}
+            <SortableTh label="Traded" sortKey="traded" sort={sort} className={th} />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((s, i) => (
+            <tr key={s.id ?? i} className="border-b last:border-0">
+              {showDate && <td className="py-1 pr-2">{s.date}</td>}
+              <td className={`py-1 pr-2 font-mono${showSources ? " font-medium" : ""}`}>{s.symbol}</td>
+              <td className="py-1 pr-2 text-right">{s.combined_forecast.toFixed(1)}</td>
+              <td className="py-1 pr-2">{s.action}</td>
+              <td className="py-1 pr-2 text-right">{formatNumber(s.entry_price)}</td>
+              <td className="py-1 pr-2 text-right text-red-500">{formatNumber(s.stop_loss)}</td>
+              <td className="py-1 pr-2 text-right text-green-500">{formatNumber(s.target_price)}</td>
+              <td className="py-1 pr-2 text-right">{s.quantity}</td>
+              {showSources && (
+                <td className="py-1 pr-2">
+                  <div className="flex flex-wrap gap-0.5">
+                    {s.pipeline_sources.split(",").map((src, j) => (
+                      <span key={j} className="inline-block rounded bg-accent px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {src.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+              )}
+              <td className="py-1 pr-2">
+                {s.was_traded ? (
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                ) : (
+                  <XCircle className="h-3 w-3 text-muted-foreground" />
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const WEEK_SORT = {
+  week: (w: WeeklyCheckpoint) => w.week_number,
+  period: (w: WeeklyCheckpoint) => w.week_start,
+  ret: (w: WeeklyCheckpoint) => w.week_return_pct,
+  sharpe: (w: WeeklyCheckpoint) => w.sharpe_ratio,
+  dd: (w: WeeklyCheckpoint) => w.max_dd_pct,
+  trades: (w: WeeklyCheckpoint) => w.trades_closed,
+  win: (w: WeeklyCheckpoint) => w.win_rate,
+  hold: (w: WeeklyCheckpoint) => w.avg_holding_days,
+};
+
+function WeeklyCheckpointTable({ weeks }: { weeks: WeeklyCheckpoint[] }) {
+  const { rows, sort } = useSortableRows(weeks, WEEK_SORT);
+  const th = "py-2 pr-3 font-medium";
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            <SortableTh label="Week" sortKey="week" sort={sort} className={th} />
+            <SortableTh label="Period" sortKey="period" sort={sort} className={th} />
+            <SortableTh label="Return" sortKey="ret" sort={sort} align="right" className={th} />
+            <SortableTh label="Sharpe" sortKey="sharpe" sort={sort} align="right" className={th} />
+            <SortableTh label="Max DD" sortKey="dd" sort={sort} align="right" className={th} />
+            <SortableTh label="Trades" sortKey="trades" sort={sort} align="right" className={th} />
+            <SortableTh label="Win Rate" sortKey="win" sort={sort} align="right" className={th} />
+            <SortableTh label="Avg Hold" sortKey="hold" sort={sort} align="right" className={th} />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((w) => (
+            <tr key={w.week_number} className="border-b last:border-0 hover:bg-accent/50">
+              <td className="py-2 pr-3 font-medium">W{w.week_number}</td>
+              <td className="py-2 pr-3 text-xs">{w.week_start} → {w.week_end}</td>
+              <td className={`py-2 pr-3 text-right font-medium ${w.week_return_pct >= 0 ? "text-green-500" : "text-red-500"}`}>
+                {formatPct(w.week_return_pct)}
+              </td>
+              <td className="py-2 pr-3 text-right">{w.sharpe_ratio.toFixed(2)}</td>
+              <td className="py-2 pr-3 text-right text-red-500">{formatPct(w.max_dd_pct)}</td>
+              <td className="py-2 pr-3 text-right">{w.trades_closed}/{w.trades_opened}</td>
+              <td className="py-2 pr-3 text-right">{(w.win_rate * 100).toFixed(0)}%</td>
+              <td className="py-2 pr-3 text-right">{w.avg_holding_days.toFixed(1)}d</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+type TradeRecord = Record<string, unknown>;
+const num = (v: unknown) => (v == null || v === "" ? null : Number(v));
+const text = (v: unknown) => (v == null ? "" : String(v));
+
+const OPENED_SORT = {
+  symbol: (t: TradeRecord) => text(t.symbol),
+  side: (t: TradeRecord) => text(t.side ?? "LONG"),
+  qty: (t: TradeRecord) => num(t.quantity),
+  entry: (t: TradeRecord) => num(t.entry_price),
+  sl: (t: TradeRecord) => num(t.stop_loss),
+  tp: (t: TradeRecord) => num(t.target_price),
+  opened: (t: TradeRecord) => timeValue(t.opened_at),
+};
+
+function TradesOpenedTable({ trades }: { trades: TradeRecord[] }) {
+  const { rows, sort } = useSortableRows(trades, OPENED_SORT);
+  const th = "py-1 pr-2";
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            <SortableTh label="Symbol" sortKey="symbol" sort={sort} className={th} />
+            <SortableTh label="Side" sortKey="side" sort={sort} className={th} />
+            <SortableTh label="Qty" sortKey="qty" sort={sort} align="right" className={th} />
+            <SortableTh label="Entry" sortKey="entry" sort={sort} align="right" className={th} />
+            <SortableTh label="SL" sortKey="sl" sort={sort} align="right" className={th} />
+            <SortableTh label="TP" sortKey="tp" sort={sort} align="right" className={th} />
+            <SortableTh label="Opened At" sortKey="opened" sort={sort} className={th} />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((t, i) => (
+            <tr key={i} className="border-b last:border-0">
+              <td className="py-1 pr-2 font-mono font-medium">{String(t.symbol ?? "")}</td>
+              <td className="py-1 pr-2">{String(t.side ?? "LONG")}</td>
+              <td className="py-1 pr-2 text-right">{String(t.quantity ?? "")}</td>
+              <td className="py-1 pr-2 text-right">{formatNumber(Number(t.entry_price ?? 0))}</td>
+              <td className="py-1 pr-2 text-right text-red-500">{formatNumber(Number(t.stop_loss ?? 0))}</td>
+              <td className="py-1 pr-2 text-right text-green-500">{formatNumber(Number(t.target_price ?? 0))}</td>
+              <td className="py-1 pr-2 text-xs text-muted-foreground">{String(t.opened_at ?? "")}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const CLOSED_SORT = {
+  symbol: (t: TradeRecord) => text(t.symbol),
+  reason: (t: TradeRecord) => text(t.exit_reason),
+  entry: (t: TradeRecord) => num(t.entry_price),
+  exit: (t: TradeRecord) => num(t.exit_price),
+  pnl: (t: TradeRecord) => num(t.pnl),
+  pnlPct: (t: TradeRecord) => num(t.pnl_pct),
+  closed: (t: TradeRecord) => timeValue(t.closed_at),
+};
+
+function TradesClosedTable({ trades }: { trades: TradeRecord[] }) {
+  const { rows, sort } = useSortableRows(trades, CLOSED_SORT);
+  const th = "py-1 pr-2";
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            <SortableTh label="Symbol" sortKey="symbol" sort={sort} className={th} />
+            <SortableTh label="Exit Reason" sortKey="reason" sort={sort} className={th} />
+            <SortableTh label="Entry" sortKey="entry" sort={sort} align="right" className={th} />
+            <SortableTh label="Exit" sortKey="exit" sort={sort} align="right" className={th} />
+            <SortableTh label="P&L" sortKey="pnl" sort={sort} align="right" className={th} />
+            <SortableTh label="P&L %" sortKey="pnlPct" sort={sort} align="right" className={th} />
+            <SortableTh label="Closed At" sortKey="closed" sort={sort} className={th} />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((t, i) => {
+            const pnl = Number(t.pnl ?? 0);
+            const pnlPct = Number(t.pnl_pct ?? 0);
+            return (
+              <tr key={i} className="border-b last:border-0">
+                <td className="py-1 pr-2 font-mono font-medium">{String(t.symbol ?? "")}</td>
+                <td className="py-1 pr-2">
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    String(t.exit_reason ?? "").includes("SL") ? "bg-red-500/10 text-red-500"
+                      : String(t.exit_reason ?? "").includes("TP") ? "bg-green-500/10 text-green-500"
+                        : "bg-muted text-muted-foreground"
+                  }`}>
+                    {String(t.exit_reason ?? "—")}
+                  </span>
+                </td>
+                <td className="py-1 pr-2 text-right">{formatNumber(Number(t.entry_price ?? 0))}</td>
+                <td className="py-1 pr-2 text-right">{formatNumber(Number(t.exit_price ?? 0))}</td>
+                <td className={`py-1 pr-2 text-right font-medium ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  {formatCurrency(pnl, "INR")}
+                </td>
+                <td className={`py-1 pr-2 text-right ${pnlPct >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  {pnlPct > 0 ? "+" : ""}{pnlPct.toFixed(1)}%
+                </td>
+                <td className="py-1 pr-2 text-xs text-muted-foreground">{String(t.closed_at ?? "")}</td>
               </tr>
             );
           })}
@@ -301,43 +563,8 @@ function PaperValidationPanel() {
               <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                 Show recent signals ({signals.count})
               </summary>
-              <div className="overflow-x-auto mt-2">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="py-1 pr-2">Date</th>
-                      <th className="py-1 pr-2">Symbol</th>
-                      <th className="py-1 pr-2 text-right">Forecast</th>
-                      <th className="py-1 pr-2">Action</th>
-                      <th className="py-1 pr-2 text-right">Entry</th>
-                      <th className="py-1 pr-2 text-right">SL</th>
-                      <th className="py-1 pr-2 text-right">TP</th>
-                      <th className="py-1 pr-2 text-right">Qty</th>
-                      <th className="py-1 pr-2">Traded</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {signals.signals.slice(0, 50).map((s) => (
-                      <tr key={s.id} className="border-b last:border-0">
-                        <td className="py-1 pr-2">{s.date}</td>
-                        <td className="py-1 pr-2 font-mono">{s.symbol}</td>
-                        <td className="py-1 pr-2 text-right">{s.combined_forecast.toFixed(1)}</td>
-                        <td className="py-1 pr-2">{s.action}</td>
-                        <td className="py-1 pr-2 text-right">{formatNumber(s.entry_price)}</td>
-                        <td className="py-1 pr-2 text-right text-red-500">{formatNumber(s.stop_loss)}</td>
-                        <td className="py-1 pr-2 text-right text-green-500">{formatNumber(s.target_price)}</td>
-                        <td className="py-1 pr-2 text-right">{s.quantity}</td>
-                        <td className="py-1 pr-2">
-                          {s.was_traded ? (
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <XCircle className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mt-2">
+                <SignalTable signals={signals.signals.slice(0, 50)} showDate />
               </div>
             </details>
           )}
@@ -384,38 +611,7 @@ function PaperValidationPanel() {
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <Shield className="h-4 w-4" /> Weekly Checkpoints
           </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Week</th>
-                  <th className="py-2 pr-3 font-medium">Period</th>
-                  <th className="py-2 pr-3 font-medium text-right">Return</th>
-                  <th className="py-2 pr-3 font-medium text-right">Sharpe</th>
-                  <th className="py-2 pr-3 font-medium text-right">Max DD</th>
-                  <th className="py-2 pr-3 font-medium text-right">Trades</th>
-                  <th className="py-2 pr-3 font-medium text-right">Win Rate</th>
-                  <th className="py-2 pr-3 font-medium text-right">Avg Hold</th>
-                </tr>
-              </thead>
-              <tbody>
-                {weeks.map((w) => (
-                  <tr key={w.week_number} className="border-b last:border-0 hover:bg-accent/50">
-                    <td className="py-2 pr-3 font-medium">W{w.week_number}</td>
-                    <td className="py-2 pr-3 text-xs">{w.week_start} → {w.week_end}</td>
-                    <td className={`py-2 pr-3 text-right font-medium ${w.week_return_pct >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {formatPct(w.week_return_pct)}
-                    </td>
-                    <td className="py-2 pr-3 text-right">{w.sharpe_ratio.toFixed(2)}</td>
-                    <td className="py-2 pr-3 text-right text-red-500">{formatPct(w.max_dd_pct)}</td>
-                    <td className="py-2 pr-3 text-right">{w.trades_closed}/{w.trades_opened}</td>
-                    <td className="py-2 pr-3 text-right">{(w.win_rate * 100).toFixed(0)}%</td>
-                    <td className="py-2 pr-3 text-right">{w.avg_holding_days.toFixed(1)}d</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <WeeklyCheckpointTable weeks={weeks} />
         </div>
       )}
 
@@ -559,52 +755,7 @@ function DailyDetailPanel() {
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Zap className="h-4 w-4" /> Signals — {d.total_signals} generated, {d.traded_signals} traded, {d.skipped_signals} skipped
               </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="py-1 pr-2">Symbol</th>
-                      <th className="py-1 pr-2 text-right">Forecast</th>
-                      <th className="py-1 pr-2">Action</th>
-                      <th className="py-1 pr-2 text-right">Entry</th>
-                      <th className="py-1 pr-2 text-right">SL</th>
-                      <th className="py-1 pr-2 text-right">TP</th>
-                      <th className="py-1 pr-2 text-right">Qty</th>
-                      <th className="py-1 pr-2">Sources</th>
-                      <th className="py-1 pr-2">Traded</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.signals.map((s, i) => (
-                      <tr key={i} className="border-b last:border-0">
-                        <td className="py-1 pr-2 font-mono font-medium">{s.symbol}</td>
-                        <td className="py-1 pr-2 text-right">{s.combined_forecast.toFixed(1)}</td>
-                        <td className="py-1 pr-2">{s.action}</td>
-                        <td className="py-1 pr-2 text-right">{formatNumber(s.entry_price)}</td>
-                        <td className="py-1 pr-2 text-right text-red-500">{formatNumber(s.stop_loss)}</td>
-                        <td className="py-1 pr-2 text-right text-green-500">{formatNumber(s.target_price)}</td>
-                        <td className="py-1 pr-2 text-right">{s.quantity}</td>
-                        <td className="py-1 pr-2">
-                          <div className="flex flex-wrap gap-0.5">
-                            {s.pipeline_sources.split(",").map((src, j) => (
-                              <span key={j} className="inline-block rounded bg-accent px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                {src.trim()}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-1 pr-2">
-                          {s.was_traded ? (
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <XCircle className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <SignalTable signals={d.signals} showSources />
             </div>
           )}
 
@@ -614,34 +765,7 @@ function DailyDetailPanel() {
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <ArrowUpRight className="h-4 w-4 text-green-500" /> Trades Opened ({d.trades_opened_count})
               </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="py-1 pr-2">Symbol</th>
-                      <th className="py-1 pr-2">Side</th>
-                      <th className="py-1 pr-2 text-right">Qty</th>
-                      <th className="py-1 pr-2 text-right">Entry</th>
-                      <th className="py-1 pr-2 text-right">SL</th>
-                      <th className="py-1 pr-2 text-right">TP</th>
-                      <th className="py-1 pr-2">Opened At</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.trades_opened.map((t, i) => (
-                      <tr key={i} className="border-b last:border-0">
-                        <td className="py-1 pr-2 font-mono font-medium">{String(t.symbol ?? "")}</td>
-                        <td className="py-1 pr-2">{String(t.side ?? "LONG")}</td>
-                        <td className="py-1 pr-2 text-right">{String(t.quantity ?? "")}</td>
-                        <td className="py-1 pr-2 text-right">{formatNumber(Number(t.entry_price ?? 0))}</td>
-                        <td className="py-1 pr-2 text-right text-red-500">{formatNumber(Number(t.stop_loss ?? 0))}</td>
-                        <td className="py-1 pr-2 text-right text-green-500">{formatNumber(Number(t.target_price ?? 0))}</td>
-                        <td className="py-1 pr-2 text-xs text-muted-foreground">{String(t.opened_at ?? "")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TradesOpenedTable trades={d.trades_opened} />
             </div>
           )}
 
@@ -651,50 +775,7 @@ function DailyDetailPanel() {
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <XCircle className="h-4 w-4 text-red-500" /> Trades Closed / SL-TP Events ({d.trades_closed_count})
               </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="py-1 pr-2">Symbol</th>
-                      <th className="py-1 pr-2">Exit Reason</th>
-                      <th className="py-1 pr-2 text-right">Entry</th>
-                      <th className="py-1 pr-2 text-right">Exit</th>
-                      <th className="py-1 pr-2 text-right">P&L</th>
-                      <th className="py-1 pr-2 text-right">P&L %</th>
-                      <th className="py-1 pr-2">Closed At</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.trades_closed.map((t, i) => {
-                      const pnl = Number(t.pnl ?? 0);
-                      const pnlPct = Number(t.pnl_pct ?? 0);
-                      return (
-                        <tr key={i} className="border-b last:border-0">
-                          <td className="py-1 pr-2 font-mono font-medium">{String(t.symbol ?? "")}</td>
-                          <td className="py-1 pr-2">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                              String(t.exit_reason ?? "").includes("SL") ? "bg-red-500/10 text-red-500"
-                                : String(t.exit_reason ?? "").includes("TP") ? "bg-green-500/10 text-green-500"
-                                  : "bg-muted text-muted-foreground"
-                            }`}>
-                              {String(t.exit_reason ?? "—")}
-                            </span>
-                          </td>
-                          <td className="py-1 pr-2 text-right">{formatNumber(Number(t.entry_price ?? 0))}</td>
-                          <td className="py-1 pr-2 text-right">{formatNumber(Number(t.exit_price ?? 0))}</td>
-                          <td className={`py-1 pr-2 text-right font-medium ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
-                            {formatCurrency(pnl, "INR")}
-                          </td>
-                          <td className={`py-1 pr-2 text-right ${pnlPct >= 0 ? "text-green-500" : "text-red-500"}`}>
-                            {pnlPct > 0 ? "+" : ""}{pnlPct.toFixed(1)}%
-                          </td>
-                          <td className="py-1 pr-2 text-xs text-muted-foreground">{String(t.closed_at ?? "")}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <TradesClosedTable trades={d.trades_closed} />
             </div>
           )}
 
