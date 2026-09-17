@@ -9,6 +9,29 @@ import type {
   CarverStatus,
 } from "@/lib/types";
 
+// The backend answers 409 "Kite session not active" when the token expired or
+// the backend restarted while a Kite page was open. Retrying cannot help:
+// re-check the session so the page falls back to the login screen.
+const KITE_SESSION_INACTIVE = "Kite session not active";
+
+function useKiteDataQuery<T>(queryKey: unknown[], path: string, params?: Record<string, string>) {
+  const qc = useQueryClient();
+  return {
+    queryKey,
+    queryFn: async () => {
+      try {
+        return await api.get<T>(path, params);
+      } catch (err) {
+        if (err instanceof Error && err.message === KITE_SESSION_INACTIVE) {
+          qc.invalidateQueries({ queryKey: ["kite-session-status"] });
+        }
+        throw err;
+      }
+    },
+    retry: (failures: number, err: Error) => err.message !== KITE_SESSION_INACTIVE && failures < 1,
+  };
+}
+
 export function useKiteSessionStatus() {
   return useQuery({
     queryKey: ["kite-session-status"],
@@ -70,35 +93,24 @@ export function useKiteSessionStop() {
 
 export function useKiteQuotes(symbols: string[], enabled = true) {
   return useQuery({
-    queryKey: ["kite-quotes", symbols],
-    queryFn: () =>
-      api.get<LiveQuote[]>("/api/v1/kite/quotes", {
-        symbols: symbols.join(","),
-      }),
+    ...useKiteDataQuery<LiveQuote[]>(["kite-quotes", symbols], "/api/v1/kite/quotes", {
+      symbols: symbols.join(","),
+    }),
     enabled: enabled && symbols.length > 0,
     refetchInterval: 5000,
   });
 }
 
 export function useKiteHoldings() {
-  return useQuery({
-    queryKey: ["kite-holdings"],
-    queryFn: () => api.get<KiteHolding[]>("/api/v1/kite/holdings"),
-  });
+  return useQuery(useKiteDataQuery<KiteHolding[]>(["kite-holdings"], "/api/v1/kite/holdings"));
 }
 
 export function useKitePositions() {
-  return useQuery({
-    queryKey: ["kite-positions"],
-    queryFn: () => api.get<KitePosition[]>("/api/v1/kite/positions"),
-  });
+  return useQuery(useKiteDataQuery<KitePosition[]>(["kite-positions"], "/api/v1/kite/positions"));
 }
 
 export function useKiteOrders() {
-  return useQuery({
-    queryKey: ["kite-orders"],
-    queryFn: () => api.get<KiteOrder[]>("/api/v1/kite/orders"),
-  });
+  return useQuery(useKiteDataQuery<KiteOrder[]>(["kite-orders"], "/api/v1/kite/orders"));
 }
 
 export function useKitePlaceOrder() {
