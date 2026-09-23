@@ -24,7 +24,8 @@ import {
   BarChart3, Target, Shield, Zap, Calendar, Search,
   Play, Square, Clock, RefreshCw,
 } from "lucide-react";
-import type { MonitoredTradeDetail, SignalLogEntry, WeeklyCheckpoint } from "@/lib/types";
+import type { MonitoredTradeDetail, SignalLogEntry, WeeklyCheckpoint,
+  PaperSessionActivity, PaperExecution } from "@/lib/types";
 import { usePaperTradingState, usePaperTradingToggle } from "@/hooks/use-paper-trading-state";
 import { SortableTh, timeValue, useSortableRows } from "@/components/tables/sortable";
 
@@ -257,6 +258,125 @@ function WeeklyCheckpointTable({ weeks }: { weeks: WeeklyCheckpoint[] }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+const EXECUTION_SORT = {
+  symbol: (e: PaperExecution) => e.symbol,
+  source: (e: PaperExecution) => e.source,
+  side: (e: PaperExecution) => e.side,
+  qty: (e: PaperExecution) => e.quantity,
+  decided: (e: PaperExecution) => e.ref_price,
+  filled: (e: PaperExecution) => e.fill_price,
+  slip: (e: PaperExecution) => (e.ref_price ? e.fill_price / e.ref_price - 1 : null),
+  impact: (e: PaperExecution) => e.impact_bps,
+  costs: (e: PaperExecution) => e.costs_inr,
+  pnl: (e: PaperExecution) => e.pnl,
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  pending_open: "Filled at open",
+  stop: "Stop exit",
+  cancel: "Cancelled",
+};
+
+function ExecutionsTable({ executions }: { executions: PaperExecution[] }) {
+  const { rows, sort } = useSortableRows(executions, EXECUTION_SORT);
+  const th = "py-1 pr-2";
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            <SortableTh label="Symbol" sortKey="symbol" sort={sort} className={th} />
+            <SortableTh label="Event" sortKey="source" sort={sort} className={th} />
+            <SortableTh label="Side" sortKey="side" sort={sort} className={th} />
+            <SortableTh label="Qty" sortKey="qty" sort={sort} align="right" className={th} />
+            <SortableTh label="Decided at" sortKey="decided" sort={sort} align="right" className={th} />
+            <SortableTh label="Filled at" sortKey="filled" sort={sort} align="right" className={th} />
+            <SortableTh label="Slippage" sortKey="slip" sort={sort} align="right" className={th} />
+            <SortableTh label="Impact" sortKey="impact" sort={sort} align="right" className={th} />
+            <SortableTh label="Costs" sortKey="costs" sort={sort} align="right" className={th} />
+            <SortableTh label="P&L" sortKey="pnl" sort={sort} align="right" className={th} />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((e, i) => {
+            const slip = e.ref_price ? (e.fill_price / e.ref_price - 1) * 1e4 : null;
+            return (
+              <tr key={i} className="border-b last:border-0">
+                <td className="py-1 pr-2 font-mono font-medium">{e.symbol}</td>
+                <td className="py-1 pr-2">
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    e.source === "stop" ? "bg-red-500/10 text-red-500"
+                      : e.source === "cancel" ? "bg-muted text-muted-foreground"
+                        : "bg-green-500/10 text-green-600"
+                  }`}>{SOURCE_LABEL[e.source] ?? e.source}</span>
+                </td>
+                <td className="py-1 pr-2">{e.side}</td>
+                <td className="py-1 pr-2 text-right">{e.quantity || "—"}</td>
+                <td className="py-1 pr-2 text-right">{e.ref_price ? formatNumber(e.ref_price) : "—"}</td>
+                <td className="py-1 pr-2 text-right">{e.fill_price ? formatNumber(e.fill_price) : "—"}</td>
+                <td className={`py-1 pr-2 text-right ${slip != null && slip > 0 ? "text-red-500" : "text-green-600"}`}>
+                  {slip == null ? "—" : `${slip > 0 ? "+" : ""}${slip.toFixed(0)} bp`}
+                </td>
+                <td className="py-1 pr-2 text-right">{e.impact_bps ? `${e.impact_bps.toFixed(1)} bp` : "—"}</td>
+                <td className="py-1 pr-2 text-right">{e.costs_inr ? formatCurrency(e.costs_inr, "INR") : "—"}</td>
+                <td className={`py-1 pr-2 text-right ${e.pnl > 0 ? "text-green-500" : e.pnl < 0 ? "text-red-500" : ""}`}>
+                  {e.pnl ? formatCurrency(e.pnl, "INR") : "—"}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SessionActivityCard({ session, date }: { session: PaperSessionActivity | null; date: string }) {
+  if (!session) {
+    return (
+      <div className="content-panel p-4 border-l-4 border-l-amber-500 bg-amber-500/5">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-amber-500" /> No session recorded for {date}
+        </h3>
+        <p className="text-xs text-muted-foreground mt-1">
+          Either the engine did not run that day, or the session predates activity recording.
+        </p>
+      </div>
+    );
+  }
+  const stat = (label: string, value: React.ReactNode) => (
+    <div className="text-center p-2 rounded bg-accent/30">
+      <p className="text-lg font-bold font-mono">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  );
+  return (
+    <div className="content-panel p-4 border-l-4 border-l-blue-500 bg-blue-500/5">
+      <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
+        <Activity className="h-4 w-4 text-blue-500" /> Session {session.session_date}
+        <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+          session.rebalance_day ? "bg-blue-500/10 text-blue-600" : "bg-muted text-muted-foreground"
+        }`}>{session.rebalance_day ? "rebalance day" : "hold day"}</span>
+      </h3>
+      <p className="text-xs text-muted-foreground mb-3">{session.outcome}</p>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        {stat("Planned buys", session.planned_buys)}
+        {stat("Planned sells", session.planned_sells)}
+        {stat("Queued", session.queued)}
+        {stat("Filled", session.filled)}
+        {stat("Stops hit", session.stops_triggered)}
+        {stat("Stops armed", session.stops_armed)}
+      </div>
+      {(session.notes || session.shift_multiplier !== 1) && (
+        <p className="text-xs text-muted-foreground mt-3">
+          {session.shift_multiplier !== 1 && `Position size multiplier ${session.shift_multiplier.toFixed(2)}. `}
+          {session.notes}
+        </p>
+      )}
     </div>
   );
 }
@@ -687,6 +807,18 @@ function DailyDetailPanel() {
 
       {d && (
         <>
+          <SessionActivityCard session={d.session} date={d.date} />
+
+          {/* Executions: fills, stop exits and cancellations */}
+          {d.executions_count > 0 && (
+            <div className="content-panel p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Zap className="h-4 w-4" /> Executions ({d.executions_count})
+              </h3>
+              <ExecutionsTable executions={d.executions} />
+            </div>
+          )}
+
           {/* Day KPIs */}
           {d.snapshot && (
             <div>

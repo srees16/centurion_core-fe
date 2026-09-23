@@ -1190,10 +1190,50 @@ export interface WeeklyCheckpointsResponse {
 }
 
 // ─── Daily Detail Drill-down ─────────────────────────────────────────────
+export interface PaperSessionActivity {
+  session_date: string;
+  ran_at: string;
+  equity: number;
+  cash: number;
+  open_positions: number;
+  rebalance_day: boolean;
+  planned_buys: number;
+  planned_sells: number;
+  queued: number;
+  filled: number;
+  cancelled: number;
+  stops_triggered: number;
+  stops_armed: number;
+  skipped: number;
+  shift_multiplier: number;
+  outcome: string;
+  notes: string;
+}
+
+export interface PaperExecution {
+  session_date: string;
+  decision_date: string;
+  source: string;           // pending_open | stop | cancel
+  symbol: string;
+  side: string;
+  status: string;
+  requested_qty: number;
+  quantity: number;
+  ref_price: number;
+  fill_price: number;
+  impact_bps: number;
+  costs_inr: number;
+  pnl: number;
+  note: string;
+}
+
 export interface DailyDetailResponse {
   date: string;
   snapshot: DailySnapshot | null;
   snapshot_detail: Record<string, unknown>;
+  session: PaperSessionActivity | null;
+  executions: PaperExecution[];
+  executions_count: number;
   signals: SignalLogEntry[];
   total_signals: number;
   traded_signals: number;
