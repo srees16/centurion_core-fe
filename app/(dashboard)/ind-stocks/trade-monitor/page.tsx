@@ -25,7 +25,7 @@ import {
   Play, Square, Clock, RefreshCw,
 } from "lucide-react";
 import type { MonitoredTradeDetail, SignalLogEntry, WeeklyCheckpoint,
-  PaperSessionActivity, PaperExecution } from "@/lib/types";
+  PaperSessionActivity, PaperExecution, DailySnapshot } from "@/lib/types";
 import { usePaperTradingState, usePaperTradingToggle } from "@/hooks/use-paper-trading-state";
 import { SortableTh, timeValue, useSortableRows } from "@/components/tables/sortable";
 
@@ -335,15 +335,40 @@ function ExecutionsTable({ executions }: { executions: PaperExecution[] }) {
   );
 }
 
-function SessionActivityCard({ session, date }: { session: PaperSessionActivity | null; date: string }) {
+function SessionActivityCard({ session, date, snapshot, trades }: {
+  session: PaperSessionActivity | null;
+  date: string;
+  snapshot: DailySnapshot | null;
+  trades: { opened: number; closed: number; executions: number };
+}) {
+  // Activity recording started 23 Sep 2026. For earlier sessions the snapshot
+  // still proves the engine ran, so report from that rather than claiming
+  // nothing is known.
   if (!session) {
+    const traded = trades.opened + trades.closed + trades.executions;
+    if (!snapshot) {
+      return (
+        <div className="content-panel p-4 border-l-4 border-l-amber-500 bg-amber-500/5">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500" /> No session on {date}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            No snapshot was recorded, so the engine did not run this day.
+          </p>
+        </div>
+      );
+    }
     return (
-      <div className="content-panel p-4 border-l-4 border-l-amber-500 bg-amber-500/5">
+      <div className="content-panel p-4 border-l-4 border-l-blue-500 bg-blue-500/5">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-amber-500" /> No session recorded for {date}
+          <Activity className="h-4 w-4 text-blue-500" /> Session {date}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Either the engine did not run that day, or the session predates activity recording.
+          {traded > 0
+            ? `${trades.opened} opened, ${trades.closed} closed, ${trades.executions} execution(s).`
+            : `Held ${snapshot.open_positions} position(s), no trades. `}
+          Equity {formatCurrency(snapshot.equity, "INR")}. Detailed session recording began
+          on 23 Sep 2026, so the planned-order breakdown is not available for this date.
         </p>
       </div>
     );
@@ -807,17 +832,25 @@ function DailyDetailPanel() {
 
       {d && (
         <>
-          <SessionActivityCard session={d.session} date={d.date} />
+          <SessionActivityCard
+            session={d.session}
+            date={d.date}
+            snapshot={d.snapshot}
+            trades={{ opened: d.trades_opened_count, closed: d.trades_closed_count,
+                      executions: d.executions_count }}
+          />
 
           {/* Executions: fills, stop exits and cancellations */}
-          {d.executions_count > 0 && (
-            <div className="content-panel p-4">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <Zap className="h-4 w-4" /> Executions ({d.executions_count})
-              </h3>
-              <ExecutionsTable executions={d.executions} />
-            </div>
-          )}
+          <div className="content-panel p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Zap className="h-4 w-4" /> Executions ({d.executions_count})
+            </h3>
+            {d.executions_count > 0
+              ? <ExecutionsTable executions={d.executions} />
+              : <p className="text-sm text-muted-foreground">
+                  Nothing executed this session — no order filled, no stop triggered.
+                </p>}
+          </div>
 
           {/* Day KPIs */}
           {d.snapshot && (
@@ -892,27 +925,32 @@ function DailyDetailPanel() {
           )}
 
           {/* Trades opened */}
-          {d.trades_opened_count > 0 && (
-            <div className="content-panel p-4">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <ArrowUpRight className="h-4 w-4 text-green-500" /> Trades Opened ({d.trades_opened_count})
-              </h3>
-              <TradesOpenedTable trades={d.trades_opened} />
-            </div>
-          )}
+          <div className="content-panel p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <ArrowUpRight className="h-4 w-4 text-green-500" /> Trades Opened ({d.trades_opened_count})
+            </h3>
+            {d.trades_opened_count > 0
+              ? <TradesOpenedTable trades={d.trades_opened} />
+              : <p className="text-sm text-muted-foreground">
+                  No position was opened on this date. Entries fill at the open of the session
+                  after a rebalance, so most days show none.
+                </p>}
+          </div>
 
           {/* Trades closed / SL-TP events */}
-          {d.trades_closed_count > 0 && (
-            <div className="content-panel p-4">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <XCircle className="h-4 w-4 text-red-500" /> Trades Closed / SL-TP Events ({d.trades_closed_count})
-              </h3>
-              <TradesClosedTable trades={d.trades_closed} />
-            </div>
-          )}
+          <div className="content-panel p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-red-500" /> Trades Closed / SL-TP Events ({d.trades_closed_count})
+            </h3>
+            {d.trades_closed_count > 0
+              ? <TradesClosedTable trades={d.trades_closed} />
+              : <p className="text-sm text-muted-foreground">
+                  No position was closed on this date: no stop was hit and no rebalance sold out of a name.
+                </p>}
+          </div>
 
           {/* Empty state */}
-          {!d.snapshot && d.signals.length === 0 && d.trades_opened_count === 0 && d.trades_closed_count === 0 && (
+          {!d.snapshot && d.signals.length === 0 && d.executions_count === 0 && (
             <div className="content-panel p-6 text-center text-muted-foreground">
               <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No activity recorded for {d.date}</p>
