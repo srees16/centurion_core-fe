@@ -16,6 +16,7 @@ import {
   useSignalLog,
   useWeeklyCheckpoints,
   useDailyDetail,
+  usePaperSessions,
 } from "@/hooks/use-trade-monitor";
 import { formatCurrency, formatPct, formatNumber } from "@/lib/utils";
 import {
@@ -790,7 +791,18 @@ function PaperValidationPanel() {
 
 function DailyDetailPanel() {
   const snapQ = useDailySnapshots();
+  const sessionsQ = usePaperSessions();
   const dates = (snapQ.data?.snapshots ?? []).map((s) => s.date).sort().reverse();
+  // Two different days matter: the rebalance decides the orders, and the next
+  // session fills them - that is when the holdings actually change.
+  const byDate = new Map((sessionsQ.data?.sessions ?? []).map((s) => [s.session_date, s]));
+  const dayKind = (d: string): "traded" | "rebalance" | "hold" => {
+    const s = byDate.get(d);
+    if (!s) return "hold";
+    if (s.filled > 0 || s.stops_triggered > 0) return "traded";
+    if (s.rebalance_day && (s.planned_buys > 0 || s.planned_sells > 0)) return "rebalance";
+    return "hold";
+  };
   const [selectedDate, setSelectedDate] = useState<string | null>(dates[0] ?? null);
   const detailQ = useDailyDetail(selectedDate);
   const d = detailQ.data;
@@ -811,21 +823,47 @@ function DailyDetailPanel() {
           <p className="text-sm text-muted-foreground">No snapshots recorded yet.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {dates.slice(0, 28).map((dt) => (
-              <button
-                key={dt}
-                onClick={() => setSelectedDate(dt)}
-                className={`px-3 py-1.5 text-xs font-mono rounded-md border transition-colors ${
-                  dt === selectedDate
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background hover:bg-accent border-border"
-                }`}
-              >
-                {dt}
-              </button>
-            ))}
+            {dates.slice(0, 28).map((dt) => {
+              const kind = dayKind(dt);
+              const resting = kind === "traded"
+                ? "bg-green-500/15 border-green-500/50 text-green-700 dark:text-green-400 hover:bg-green-500/25"
+                : kind === "rebalance"
+                  ? "bg-amber-500/15 border-amber-500/50 text-amber-700 dark:text-amber-400 hover:bg-amber-500/25"
+                  : "bg-background hover:bg-accent border-border";
+              const title = kind === "traded"
+                ? "Holdings changed: orders filled or a stop was hit"
+                : kind === "rebalance"
+                  ? "Rebalance decided: orders queued for the next open"
+                  : "Held: no change to the portfolio";
+              return (
+                <button
+                  key={dt}
+                  onClick={() => setSelectedDate(dt)}
+                  title={title}
+                  className={`px-3 py-1.5 text-xs font-mono rounded-md border transition-colors ${
+                    dt === selectedDate ? "bg-primary text-primary-foreground border-primary" : resting
+                  }`}
+                >
+                  {dt}
+                </button>
+              );
+            })}
           </div>
         )}
+        <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-green-500/50 bg-green-500/15" />
+            holdings changed
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-amber-500/50 bg-amber-500/15" />
+            rebalance decided, fills next session
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-border bg-background" />
+            held
+          </span>
+        </div>
       </div>
 
       {detailQ.isLoading && <Spinner />}
