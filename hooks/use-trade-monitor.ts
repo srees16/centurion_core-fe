@@ -8,6 +8,7 @@ import type {
   SignalLogResponse,
   WeeklyCheckpointsResponse,
   DailyDetailResponse,
+  PaperSessionsResponse,
 } from "@/lib/types";
 
 export function useTradeMonitorSummary() {
@@ -54,6 +55,14 @@ export function useWeeklyCheckpoints() {
   return useQuery({
     queryKey: ["weekly-checkpoints"],
     queryFn: () => api.get<WeeklyCheckpointsResponse>("/api/v1/screener/monitor/weekly-checkpoints"),
+    refetchInterval: 120_000,
+  });
+}
+
+export function usePaperSessions() {
+  return useQuery({
+    queryKey: ["paper-sessions"],
+    queryFn: () => api.get<PaperSessionsResponse>("/api/v1/screener/monitor/sessions"),
     refetchInterval: 120_000,
   });
 }

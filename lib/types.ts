@@ -1210,6 +1210,11 @@ export interface PaperSessionActivity {
   notes: string;
 }
 
+export interface PaperSessionsResponse {
+  sessions: PaperSessionActivity[];
+  count: number;
+}
+
 export interface PaperExecution {
   session_date: string;
   decision_date: string;
