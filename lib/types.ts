@@ -1208,6 +1208,8 @@ export interface PaperSessionActivity {
   shift_multiplier: number;
   outcome: string;
   notes: string;
+  drawdown_state?: string;   // nse_engine.drawdown rule: normal | halt | half | risk_off
+  drawdown_pct?: number;     // book drawdown from the episode peak, %
 }
 
 export interface PaperSessionsResponse {
