@@ -397,8 +397,10 @@ function SessionActivityCard({ session, date, snapshot, trades }: {
         {stat("Stops hit", session.stops_triggered)}
         {stat("Stops armed", session.stops_armed)}
       </div>
-      {(session.notes || session.shift_multiplier !== 1) && (
+      {(session.notes || session.shift_multiplier !== 1 || session.drawdown_state) && (
         <p className="text-xs text-muted-foreground mt-3">
+          {session.drawdown_state &&
+            `Drawdown rule ${session.drawdown_state.replace("_", "-")}, ${(session.drawdown_pct ?? 0).toFixed(1)}% below the episode peak. `}
           {session.shift_multiplier !== 1 && `Position size multiplier ${session.shift_multiplier.toFixed(2)}. `}
           {session.notes}
         </p>
