@@ -1094,6 +1094,19 @@ export interface MonitoredTradeDetail {
   product: string;
   is_active: boolean;
   unrealised_pnl_pct: number;
+  // Per-position P&L (tracker G10).  Open positions: price, value and P&L
+  // before exit costs, marked live or at the last close; current_price is
+  // null when no price is known.  Closed trades: realised pnl and pnl_pct.
+  current_price?: number | null;
+  market_value?: number | null;
+  unrealised_pnl?: number | null;
+  mark_source?: "live" | "close" | null;
+  mark_date?: string | null;
+  pnl?: number;
+  pnl_pct?: number | null;
+  exit_price?: number;
+  exit_reason?: string;
+  closed_at?: string | null;
 }
 
 export interface TradeMonitorDetail {
@@ -1101,6 +1114,16 @@ export interface TradeMonitorDetail {
   closed_trades: MonitoredTradeDetail[];
   total_active: number;
   total_closed: number;
+  total_pending?: number;
+  unrealised_pnl?: number;
+  unrealised_pnl_pct?: number | null;
+  invested_value?: number;
+  market_value?: number;
+  marked_positions?: number;
+  marks_source?: "live" | "close" | null;
+  marks_as_of?: string | null;
+  realised_pnl?: number;
+  realised_wins?: number;
 }
 
 // ─── Paper Validation Checkpoint Types ───────────────────────────────────

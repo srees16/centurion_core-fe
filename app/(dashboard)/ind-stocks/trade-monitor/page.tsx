@@ -26,7 +26,7 @@ import {
   Play, Square, Clock, RefreshCw,
 } from "lucide-react";
 import type { MonitoredTradeDetail, SignalLogEntry, WeeklyCheckpoint,
-  PaperSessionActivity, PaperExecution, DailySnapshot } from "@/lib/types";
+  PaperSessionActivity, PaperExecution, DailySnapshot, TradeMonitorDetail } from "@/lib/types";
 import { usePaperTradingState, usePaperTradingToggle } from "@/hooks/use-paper-trading-state";
 import { SortableTh, timeValue, useSortableRows } from "@/components/tables/sortable";
 
@@ -71,6 +71,60 @@ function rewardToRisk(t: MonitoredTradeDetail): number | null {
   return risk > 0 ? Math.abs(t.target_price - t.entry_price) / risk : null;
 }
 
+/* Per-position P&L (G10): open positions at their live or last-close price
+   (before exit costs), closed trades realised; null when there is no price. */
+function tradePrice(t: MonitoredTradeDetail): number | null {
+  if (t.closed) return t.exit_price ?? null;
+  return t.entry_filled ? (t.current_price ?? null) : null;
+}
+
+function pnlInr(t: MonitoredTradeDetail): number | null {
+  if (t.closed) return t.pnl ?? null;
+  return t.entry_filled && t.current_price != null ? (t.unrealised_pnl ?? null) : null;
+}
+
+function pnlPct(t: MonitoredTradeDetail): number | null {
+  if (t.closed) return t.pnl_pct ?? t.unrealised_pnl_pct ?? null;
+  return t.entry_filled && t.current_price != null ? t.unrealised_pnl_pct : null;
+}
+
+function pnlClass(v: number | null): string {
+  if (v == null) return "text-muted-foreground";
+  return v >= 0 ? "text-green-500" : "text-red-500";
+}
+
+function PnlSummary({ data, mode }: { data?: TradeMonitorDetail; mode: "active" | "closed" }) {
+  if (!data) return null;
+  if (mode === "closed") {
+    if (!data.total_closed) return null;
+    const r = data.realised_pnl ?? 0;
+    return (
+      <p className="mb-3 text-sm text-muted-foreground">
+        Realised P&amp;L <span className={`font-medium ${pnlClass(r)}`}>{formatCurrency(r, "INR")}</span>
+        {" "}over {data.total_closed} trades, {data.realised_wins ?? 0} with a profit.
+      </p>
+    );
+  }
+  if (!data.total_active) return null;
+  if (!data.marked_positions) {
+    return (
+      <p className="mb-3 text-sm text-muted-foreground">
+        No prices yet: per-position P&amp;L appears after the next paper session.
+      </p>
+    );
+  }
+  const u = data.unrealised_pnl ?? 0;
+  const when = data.marks_source === "live" ? "live prices" : `the close of ${data.marks_as_of ?? "the last session"}`;
+  return (
+    <p className="mb-3 text-sm text-muted-foreground">
+      Unrealised P&amp;L <span className={`font-medium ${pnlClass(u)}`}>{formatCurrency(u, "INR")}</span>
+      {data.unrealised_pnl_pct != null && <> ({formatPct(data.unrealised_pnl_pct, 2)})</>}
+      {" "}on {formatCurrency(data.invested_value ?? 0, "INR")} invested across {data.marked_positions} positions,
+      {" "}at {when}; before exit costs.
+    </p>
+  );
+}
+
 const TRADE_SORT = {
   symbol: (t: MonitoredTradeDetail) => t.symbol,
   side: (t: MonitoredTradeDetail) => t.direction,
@@ -80,12 +134,15 @@ const TRADE_SORT = {
   sl: (t: MonitoredTradeDetail) => t.stop_loss,
   target: (t: MonitoredTradeDetail) => t.target_price,
   rr: rewardToRisk,
-  pnl: (t: MonitoredTradeDetail) => t.unrealised_pnl_pct,
+  price: tradePrice,
+  pnl_inr: pnlInr,
+  pnl: pnlPct,
+  closed_at: (t: MonitoredTradeDetail) => timeValue(t.closed_at ?? ""),
   product: (t: MonitoredTradeDetail) => t.product,
   opened: (t: MonitoredTradeDetail) => timeValue(t.opened_at),
 };
 
-function TradeTable({ trades, showPnl }: { trades: MonitoredTradeDetail[]; showPnl?: boolean }) {
+function TradeTable({ trades, mode }: { trades: MonitoredTradeDetail[]; mode: "active" | "closed" }) {
   const { rows, sort } = useSortableRows(trades, TRADE_SORT);
 
   if (trades.length === 0) {
@@ -103,18 +160,24 @@ function TradeTable({ trades, showPnl }: { trades: MonitoredTradeDetail[]; showP
             <SortableTh label="Status" sortKey="status" sort={sort} className={th} />
             <SortableTh label="Qty" sortKey="qty" sort={sort} align="right" className={th} />
             <SortableTh label="Entry" sortKey="entry" sort={sort} align="right" className={th} />
+            <SortableTh label={mode === "closed" ? "Exit" : "Last"} sortKey="price" sort={sort} align="right" className={th} />
             <SortableTh label="Stop Loss" sortKey="sl" sort={sort} align="right" className={th} />
             <SortableTh label="Target" sortKey="target" sort={sort} align="right" className={th} />
             <SortableTh label="R:R" sortKey="rr" sort={sort} align="right" className={th} />
-            {showPnl && <SortableTh label="P&L %" sortKey="pnl" sort={sort} align="right" className={th} />}
+            <SortableTh label="P&L ₹" sortKey="pnl_inr" sort={sort} align="right" className={th} />
+            <SortableTh label="P&L %" sortKey="pnl" sort={sort} align="right" className={th} />
             <SortableTh label="Product" sortKey="product" sort={sort} className={th} />
-            <SortableTh label="Opened" sortKey="opened" sort={sort} className="py-2 font-medium" />
+            <SortableTh label="Opened" sortKey="opened" sort={sort} className={mode === "closed" ? th : "py-2 font-medium"} />
+            {mode === "closed" && <SortableTh label="Closed" sortKey="closed_at" sort={sort} className="py-2 font-medium" />}
           </tr>
         </thead>
         <tbody>
           {rows.map((t) => {
             const ratio = rewardToRisk(t);
             const rr = ratio === null ? "—" : ratio.toFixed(1);
+            const price = tradePrice(t);
+            const pnl = pnlInr(t);
+            const pct = pnlPct(t);
             return (
               <tr key={t.entry_order_id} className="border-b last:border-0 hover:bg-accent/50 transition-colors">
                 <td className="py-2 pr-3 font-mono font-medium">{t.symbol}</td>
@@ -122,16 +185,24 @@ function TradeTable({ trades, showPnl }: { trades: MonitoredTradeDetail[]; showP
                 <td className="py-2 pr-3"><StatusBadge trade={t} /></td>
                 <td className="py-2 pr-3 text-right">{t.quantity}</td>
                 <td className="py-2 pr-3 text-right">{formatCurrency(t.entry_price, "INR")}</td>
+                <td className="py-2 pr-3 text-right"
+                    title={t.mark_source === "close" && t.mark_date ? `close of ${t.mark_date}` : t.mark_source ?? undefined}>
+                  {price == null ? "—" : formatCurrency(price, "INR")}
+                </td>
                 <td className="py-2 pr-3 text-right text-red-500">{formatCurrency(t.stop_loss, "INR")}</td>
                 <td className="py-2 pr-3 text-right text-green-500">{formatCurrency(t.target_price, "INR")}</td>
                 <td className="py-2 pr-3 text-right">{rr}×</td>
-                {showPnl && (
-                  <td className={`py-2 pr-3 text-right font-medium ${t.unrealised_pnl_pct >= 0 ? "text-green-500" : "text-red-500"}`}>
-                    {t.unrealised_pnl_pct > 0 ? "+" : ""}{t.unrealised_pnl_pct.toFixed(1)}%
-                  </td>
-                )}
+                <td className={`py-2 pr-3 text-right font-medium ${pnlClass(pnl)}`}>
+                  {pnl == null ? "—" : formatCurrency(pnl, "INR")}
+                </td>
+                <td className={`py-2 pr-3 text-right font-medium ${pnlClass(pct)}`}>
+                  {pct == null ? "—" : formatPct(pct, 1)}
+                </td>
                 <td className="py-2 pr-3 text-xs">{t.product}</td>
-                <td className="py-2 text-xs text-muted-foreground">{new Date(t.opened_at).toLocaleString()}</td>
+                <td className={`${mode === "closed" ? "py-2 pr-3" : "py-2"} text-xs text-muted-foreground`}>{new Date(t.opened_at).toLocaleString()}</td>
+                {mode === "closed" && (
+                  <td className="py-2 text-xs text-muted-foreground">{t.closed_at ? new Date(t.closed_at).toLocaleString() : "—"}</td>
+                )}
               </tr>
             );
           })}
@@ -1054,7 +1125,8 @@ export default function TradeMonitorPage() {
         <TabsContent value="active" className="mt-4">
           {tradesQ.isLoading ? <Spinner /> : (
             <div className="content-panel p-4">
-              <TradeTable trades={active} showPnl />
+              <PnlSummary data={tradesQ.data} mode="active" />
+              <TradeTable trades={active} mode="active" />
             </div>
           )}
         </TabsContent>
@@ -1062,7 +1134,8 @@ export default function TradeMonitorPage() {
         <TabsContent value="closed" className="mt-4">
           {tradesQ.isLoading ? <Spinner /> : (
             <div className="content-panel p-4">
-              <TradeTable trades={closed} />
+              <PnlSummary data={tradesQ.data} mode="closed" />
+              <TradeTable trades={closed} mode="closed" />
             </div>
           )}
         </TabsContent>
