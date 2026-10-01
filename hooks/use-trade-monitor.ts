@@ -9,7 +9,19 @@ import type {
   WeeklyCheckpointsResponse,
   DailyDetailResponse,
   PaperSessionsResponse,
+  PaperBooksResponse,
 } from "@/lib/types";
+
+/** Query params for a paper book other than the deployed one (G12). */
+const bookParams = (book?: string) => (book && book !== "deployed" ? { book } : undefined);
+
+export function usePaperBooks() {
+  return useQuery({
+    queryKey: ["paper-books"],
+    queryFn: () => api.get<PaperBooksResponse>("/api/v1/screener/monitor/books"),
+    staleTime: 10 * 60_000,
+  });
+}
 
 export function useTradeMonitorSummary() {
   return useQuery({
@@ -19,58 +31,58 @@ export function useTradeMonitorSummary() {
   });
 }
 
-export function useTradeMonitorTrades() {
+export function useTradeMonitorTrades(book?: string) {
   return useQuery({
-    queryKey: ["trade-monitor-trades"],
-    queryFn: () => api.get<TradeMonitorDetail>("/api/v1/screener/monitor/trades"),
+    queryKey: ["trade-monitor-trades", book],
+    queryFn: () => api.get<TradeMonitorDetail>("/api/v1/screener/monitor/trades", bookParams(book)),
     refetchInterval: 30_000,
   });
 }
 
-export function usePaperDashboard() {
+export function usePaperDashboard(book?: string) {
   return useQuery({
-    queryKey: ["paper-dashboard"],
-    queryFn: () => api.get<PaperDashboard>("/api/v1/screener/monitor/paper-dashboard"),
+    queryKey: ["paper-dashboard", book],
+    queryFn: () => api.get<PaperDashboard>("/api/v1/screener/monitor/paper-dashboard", bookParams(book)),
     refetchInterval: 60_000,
   });
 }
 
-export function useDailySnapshots() {
+export function useDailySnapshots(book?: string) {
   return useQuery({
-    queryKey: ["daily-snapshots"],
-    queryFn: () => api.get<DailySnapshotsResponse>("/api/v1/screener/monitor/daily-snapshots"),
+    queryKey: ["daily-snapshots", book],
+    queryFn: () => api.get<DailySnapshotsResponse>("/api/v1/screener/monitor/daily-snapshots", bookParams(book)),
     refetchInterval: 120_000,
   });
 }
 
-export function useSignalLog() {
+export function useSignalLog(book?: string) {
   return useQuery({
-    queryKey: ["signal-log"],
-    queryFn: () => api.get<SignalLogResponse>("/api/v1/screener/monitor/signal-log"),
+    queryKey: ["signal-log", book],
+    queryFn: () => api.get<SignalLogResponse>("/api/v1/screener/monitor/signal-log", bookParams(book)),
     refetchInterval: 120_000,
   });
 }
 
-export function useWeeklyCheckpoints() {
+export function useWeeklyCheckpoints(book?: string) {
   return useQuery({
-    queryKey: ["weekly-checkpoints"],
-    queryFn: () => api.get<WeeklyCheckpointsResponse>("/api/v1/screener/monitor/weekly-checkpoints"),
+    queryKey: ["weekly-checkpoints", book],
+    queryFn: () => api.get<WeeklyCheckpointsResponse>("/api/v1/screener/monitor/weekly-checkpoints", bookParams(book)),
     refetchInterval: 120_000,
   });
 }
 
-export function usePaperSessions() {
+export function usePaperSessions(book?: string) {
   return useQuery({
-    queryKey: ["paper-sessions"],
-    queryFn: () => api.get<PaperSessionsResponse>("/api/v1/screener/monitor/sessions"),
+    queryKey: ["paper-sessions", book],
+    queryFn: () => api.get<PaperSessionsResponse>("/api/v1/screener/monitor/sessions", bookParams(book)),
     refetchInterval: 120_000,
   });
 }
 
-export function useDailyDetail(date: string | null) {
+export function useDailyDetail(date: string | null, book?: string) {
   return useQuery({
-    queryKey: ["daily-detail", date],
-    queryFn: () => api.get<DailyDetailResponse>(`/api/v1/screener/monitor/daily-detail/${date}`),
+    queryKey: ["daily-detail", date, book],
+    queryFn: () => api.get<DailyDetailResponse>(`/api/v1/screener/monitor/daily-detail/${date}`, bookParams(book)),
     enabled: !!date,
     refetchInterval: 120_000,
   });

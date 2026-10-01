@@ -1240,6 +1240,19 @@ export interface PaperSessionsResponse {
   count: number;
 }
 
+export interface PaperBook {
+  book: string;
+  schema: string | null;
+  label: string;
+  status: string;
+  paper_start_date: string;
+}
+
+export interface PaperBooksResponse {
+  books: PaperBook[];
+  count: number;
+}
+
 export interface PaperExecution {
   session_date: string;
   decision_date: string;
