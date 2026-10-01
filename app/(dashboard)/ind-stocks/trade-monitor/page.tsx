@@ -11,6 +11,7 @@ import { NIFTY_50_TICKERS } from "@/lib/constants";
 import {
   useTradeMonitorSummary,
   useTradeMonitorTrades,
+  usePaperBooks,
   usePaperDashboard,
   useDailySnapshots,
   useSignalLog,
@@ -18,6 +19,7 @@ import {
   useDailyDetail,
   usePaperSessions,
 } from "@/hooks/use-trade-monitor";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatPct, formatNumber } from "@/lib/utils";
 import {
   Activity, CheckCircle, XCircle, AlertTriangle,
@@ -683,11 +685,11 @@ function PaperTradingControl() {
 
 /* ── Paper Validation Section ──────────────────────────────────────────── */
 
-function PaperValidationPanel() {
-  const dashQ = usePaperDashboard();
-  const snapQ = useDailySnapshots();
-  const sigQ = useSignalLog();
-  const weekQ = useWeeklyCheckpoints();
+function PaperValidationPanel({ book }: { book: string }) {
+  const dashQ = usePaperDashboard(book);
+  const snapQ = useDailySnapshots(book);
+  const sigQ = useSignalLog(book);
+  const weekQ = useWeeklyCheckpoints(book);
 
   const dash = dashQ.data;
   const snapshots = snapQ.data?.snapshots ?? [];
@@ -862,9 +864,9 @@ function PaperValidationPanel() {
 
 /* ── Main Page ─────────────────────────────────────────────────────────── */
 
-function DailyDetailPanel() {
-  const snapQ = useDailySnapshots();
-  const sessionsQ = usePaperSessions();
+function DailyDetailPanel({ book }: { book: string }) {
+  const snapQ = useDailySnapshots(book);
+  const sessionsQ = usePaperSessions(book);
   const dates = (snapQ.data?.snapshots ?? []).map((s) => s.date).sort().reverse();
   // Two different days matter: the rebalance decides the orders, and the next
   // session fills them - that is when the holdings actually change.
@@ -877,7 +879,7 @@ function DailyDetailPanel() {
     return "hold";
   };
   const [selectedDate, setSelectedDate] = useState<string | null>(dates[0] ?? null);
-  const detailQ = useDailyDetail(selectedDate);
+  const detailQ = useDailyDetail(selectedDate, book);
   const d = detailQ.data;
 
   // Update selected date when snapshots load
@@ -1077,8 +1079,12 @@ export default function TradeMonitorPage() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "paper" ? "validation" : "active";
   const [tab, setTab] = useState(initialTab);
+  // G12: which paper book the page shows (deployed, candidate, e4, ...)
+  const [book, setBook] = useState(searchParams.get("book") ?? "deployed");
+  const booksQ = usePaperBooks();
+  const books = booksQ.data?.books ?? [{ book: "deployed", label: "deployed" }];
   const summaryQ = useTradeMonitorSummary();
-  const tradesQ = useTradeMonitorTrades();
+  const tradesQ = useTradeMonitorTrades(book);
 
   const active = tradesQ.data?.active_trades ?? [];
   const closed = tradesQ.data?.closed_trades ?? [];
@@ -1090,7 +1096,19 @@ export default function TradeMonitorPage() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Trade Monitor</h2>
-        <p className="text-xs text-muted-foreground">Auto-refresh every 30s</p>
+        <div className="flex items-center gap-3">
+          <Select value={book} onValueChange={setBook}>
+            <SelectTrigger className="h-8 w-[200px] text-xs" aria-label="Paper book">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {books.map((b) => (
+                <SelectItem key={b.book} value={b.book}>{b.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">Auto-refresh every 30s</p>
+        </div>
       </div>
 
       {summaryQ.isLoading ? (
@@ -1141,11 +1159,11 @@ export default function TradeMonitorPage() {
         </TabsContent>
 
         <TabsContent value="validation" className="mt-4">
-          <PaperValidationPanel />
+          <PaperValidationPanel book={book} />
         </TabsContent>
 
         <TabsContent value="daily-detail" className="mt-4">
-          <DailyDetailPanel />
+          <DailyDetailPanel book={book} />
         </TabsContent>
       </Tabs>
     </div>
