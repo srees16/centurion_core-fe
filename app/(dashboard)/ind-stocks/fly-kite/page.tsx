@@ -107,6 +107,16 @@ function KiteLanding({
               href={loginUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => {
+                // Open from script so the login callback page may close the tab
+                // after success; cut the opener before Zerodha's page loads.
+                // A blocked popup falls back to the plain link.
+                const w = window.open("", "_blank");
+                if (!w) return;
+                e.preventDefault();
+                w.opener = null;
+                w.location.href = loginUrl;
+              }}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               <ExternalLink className="h-4 w-4" />
