@@ -673,12 +673,15 @@ export interface KiteHolding {
   tradingsymbol: string;
   exchange: string;
   quantity: number;
+  t1_quantity?: number;
   average_price: number;
   last_price: number;
   pnl: number;
   pnl_pct: number;
   day_change: number;
   day_change_pct: number;
+  /** Shares Centurion bought (its live book's ledger), settled or T1 (tracker FK1). */
+  centurion_qty?: number;
 }
 
 export interface KitePosition {
