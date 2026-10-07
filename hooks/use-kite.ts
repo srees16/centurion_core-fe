@@ -8,7 +8,9 @@ import type {
   KiteSessionStatus,
   CarverStatus,
   KiteAccount,
+  KiteAccountMode,
   KiteAccountsResponse,
+  KiteDisconnect,
   NewKiteAccount,
 } from "@/lib/types";
 
@@ -160,6 +162,24 @@ export function useAddKiteAccount() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: NewKiteAccount) => api.post<KiteAccount>("/api/v1/kite/accounts", body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["kite-accounts"] }),
+  });
+}
+
+export function useUpdateKiteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; mode?: KiteAccountMode; capital?: number }) =>
+      api.post<KiteAccount>(`/api/v1/kite/accounts/${id}/update`, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["kite-accounts"] }),
+  });
+}
+
+export function useDisconnectKiteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; how: KiteDisconnect; sessions: number }) =>
+      api.post<KiteAccount>(`/api/v1/kite/accounts/${id}/disconnect`, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["kite-accounts"] }),
   });
 }
