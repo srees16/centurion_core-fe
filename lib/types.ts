@@ -974,6 +974,34 @@ export interface KiteSessionStatus {
   expiring_soon?: boolean;
 }
 
+/** A Zerodha account Centurion may connect: yours (primary) or a family member's (decision U33). */
+export interface KiteAccount {
+  id: string;
+  name: string;
+  relation: string;
+  zerodha_user_id: string;
+  api_key: string;
+  email: string;
+  created_at: string;
+  login_url: string;
+  logged_in_today: boolean;
+  login_at: string | null;
+}
+
+export interface KiteAccountsResponse {
+  accounts: KiteAccount[];
+  setup: { redirect_url: string; static_ip: string | null; relations: string[] };
+}
+
+export interface NewKiteAccount {
+  name: string;
+  relation: string;
+  zerodha_user_id: string;
+  api_key: string;
+  api_secret: string;
+  email: string;
+}
+
 export interface KitePortfolioPnLPosition {
   symbol: string;
   quantity: number;

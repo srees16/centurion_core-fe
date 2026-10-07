@@ -2,6 +2,7 @@
 
 import { LiveQuotesTable } from "@/components/tables/live-quotes-table";
 import { QuickTradePanel } from "@/components/kite/quick-trade-panel";
+import { KiteAccountsPanel } from "@/components/kite/kite-accounts-panel";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
 import { RibbonVixBar } from "@/components/common/ribbon-vix-bar";
 import { Spinner } from "@/components/common/spinner";
@@ -24,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import {
   Play, Square, RefreshCw, TrendingUp, Briefcase, BarChart3, ClipboardList,
-  AlertCircle, Zap, Shield, LineChart, ExternalLink, KeyRound, Settings2,
+  AlertCircle, ExternalLink, KeyRound, Settings2,
 } from "lucide-react";
 
 function KiteLanding({
@@ -56,30 +57,6 @@ function KiteLanding({
           <p className="text-sm text-muted-foreground">
             Zerodha Kite Connect — Real-time market data & order management
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-secondary/50">
-            <Zap className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Real-time Quotes</p>
-              <p className="text-xs text-muted-foreground">NIFTY 50, Bank Nifty, IT & Energy indices streamed live</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-secondary/50">
-            <Shield className="h-4 w-4 mt-0.5 text-green-500 shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Market Status</p>
-              <p className="text-xs text-muted-foreground">Pre-open, live & post-market sessions auto-detected</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-secondary/50">
-            <LineChart className="h-4 w-4 mt-0.5 text-purple-500 shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Order Management</p>
-              <p className="text-xs text-muted-foreground">Place, modify & cancel orders directly from dashboard</p>
-            </div>
-          </div>
         </div>
 
         {error && (
@@ -453,18 +430,21 @@ export default function FlyKitePage() {
     );
   }
 
-  if (!isActive) {
-    return (
-      <KiteLanding
-        onStart={handleStart}
-        isStarting={startSession.isPending}
-        error={startError}
-        loginUrl={loginUrl}
-        onSubmitToken={handleSubmitToken}
-        isSubmittingToken={completeSession.isPending}
-      />
-    );
-  }
-
-  return <KiteDashboard onDisconnect={() => sessionQ.refetch()} />;
+  return (
+    <div className="space-y-6">
+      {isActive ? (
+        <KiteDashboard onDisconnect={() => sessionQ.refetch()} />
+      ) : (
+        <KiteLanding
+          onStart={handleStart}
+          isStarting={startSession.isPending}
+          error={startError}
+          loginUrl={loginUrl}
+          onSubmitToken={handleSubmitToken}
+          isSubmittingToken={completeSession.isPending}
+        />
+      )}
+      <KiteAccountsPanel />
+    </div>
+  );
 }
