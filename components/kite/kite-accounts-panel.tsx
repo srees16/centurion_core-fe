@@ -291,21 +291,28 @@ export function KiteAccountsPanel() {
       {showForm && (
         <div className="space-y-4 rounded-lg border bg-secondary/30 p-4">
           <div className="space-y-1 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">How to connect a family member</p>
             <p>
-              Only a <strong>spouse, dependent child or dependent parent</strong> may share your registered static IP
-              (SEBI). The account holder first creates their own Kite Connect app on developers.kite.trade with:
+              Only a <strong>spouse, dependent child or dependent parent</strong> may share your static IP (SEBI).
             </p>
-            <p>
-              Redirect URL: <code className="rounded bg-secondary px-1">{setup?.redirect_url ?? "…"}</code>
-            </p>
-            <p>
-              IP whitelist:{" "}
-              <code className="rounded bg-secondary px-1">{setup?.static_ip ?? "the static IP on your own Kite app"}</code>
-            </p>
-            <p>
-              Centurion keeps the app&apos;s API key and secret (encrypted), never a password or TOTP. The holder logs in on
-              Zerodha&apos;s page each trading day.
-            </p>
+            <ol className="list-decimal space-y-1 pl-4">
+              <li>
+                They create a <strong>Connect</strong> app on developers.kite.trade (paid; the free Personal type has no
+                live prices) with redirect URL{" "}
+                <code className="rounded bg-secondary px-1 break-all">{setup?.redirect_url ?? "…"}</code> and IP whitelist{" "}
+                <code className="rounded bg-secondary px-1">{setup?.static_ip ?? "the static IP on your own Kite app"}</code>,
+                then copy its API key and secret.
+              </li>
+              <li>Add the account below.</li>
+              <li>
+                Click <strong>Log in</strong> on their row: they type their password and TOTP on Zerodha&apos;s page.
+              </li>
+              <li>
+                Choose the capital (start at ₹6,00,000), then <strong>Dry run</strong>. Switch to <strong>Live</strong>{" "}
+                only after 5 clean dry runs.
+              </li>
+            </ol>
+            <p>Centurion keeps the app&apos;s key and secret encrypted, never a password or TOTP.</p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
