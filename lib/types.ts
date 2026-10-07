@@ -974,6 +974,43 @@ export interface KiteSessionStatus {
   expiring_soon?: boolean;
 }
 
+/** A Zerodha account Centurion may connect: yours (primary) or a family member's (decision U33). */
+export interface KiteAccount {
+  id: string;
+  name: string;
+  relation: string;
+  zerodha_user_id: string;
+  api_key: string;
+  email: string;
+  created_at: string;
+  login_url: string;
+  logged_in_today: boolean;
+  login_at: string | null;
+  /** Family accounts: whether Centurion trades it (FA2); the primary follows CENTURION_LIVE_MODE. */
+  mode?: KiteAccountMode;
+  capital?: number;
+  /** FA3: positions Centurion holds in the account, and sessions left while it sells out (0 = not disconnecting). */
+  positions?: number;
+  unwind_sessions?: number;
+}
+
+export type KiteAccountMode = "off" | "dry_run" | "live";
+export type KiteDisconnect = "keep" | "next_open" | "sessions";
+
+export interface KiteAccountsResponse {
+  accounts: KiteAccount[];
+  setup: { redirect_url: string; static_ip: string | null; relations: string[]; rungs: number[] };
+}
+
+export interface NewKiteAccount {
+  name: string;
+  relation: string;
+  zerodha_user_id: string;
+  api_key: string;
+  api_secret: string;
+  email: string;
+}
+
 export interface KitePortfolioPnLPosition {
   symbol: string;
   quantity: number;
