@@ -18,6 +18,7 @@ import {
   useCarverStatus,
 } from "@/hooks/use-kite";
 import { DEFAULT_IND_TICKERS, NIFTY_50_TICKERS, NSE_HOLIDAYS } from "@/lib/constants";
+import type { KiteHolding } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -150,8 +151,28 @@ function KiteLanding({
   );
 }
 
+type HoldingsView = "all" | "centurion" | "others";
+const HOLDINGS_VIEWS: { value: HoldingsView; label: string; empty: string }[] = [
+  { value: "all", label: "All", empty: "No holdings found" },
+  { value: "centurion", label: "Centurion", empty: "Centurion holds nothing in this account yet" },
+  { value: "others", label: "Others", empty: "No holdings outside Centurion" },
+];
+
+/** Holdings as a view shows them: whole (All), or split into Centurion's shares and the rest (tracker FK1). */
+function holdingsRows(holdings: KiteHolding[], view: HoldingsView): KiteHolding[] {
+  if (view === "all") return holdings;
+  return holdings
+    .map((h) => {
+      const mine = h.centurion_qty ?? 0;
+      const quantity = view === "centurion" ? mine : h.quantity + (h.t1_quantity ?? 0) - mine;
+      return { ...h, quantity, pnl: (h.last_price - h.average_price) * quantity };
+    })
+    .filter((h) => h.quantity > 0);
+}
+
 function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
   const [tab, setTab] = useState("quotes");
+  const [holdingsView, setHoldingsView] = useState<HoldingsView>("all");
   const quotesQ = useKiteQuotes(DEFAULT_IND_TICKERS);
   const holdingsQ = useKiteHoldings();
   const positionsQ = useKitePositions();
@@ -160,6 +181,8 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
   const carverQ = useCarverStatus();
 
   const holdingsPnl = holdingsQ.data?.reduce((a, h) => a + h.pnl, 0) ?? 0;
+  const holdingsShown = holdingsRows(holdingsQ.data ?? [], holdingsView);
+  const holdingsShownPnl = holdingsShown.reduce((a, h) => a + h.pnl, 0);
   const positionsPnl = positionsQ.data?.reduce((a, p) => a + p.pnl, 0) ?? 0;
 
   // NSE market hours: Mon–Fri, 9:15 AM – 3:30 PM IST (excl. holidays)
@@ -269,7 +292,27 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
             <Spinner />
           ) : (
             <div className="content-panel p-4 overflow-x-auto">
-              {holdingsQ.data && holdingsQ.data.length > 0 ? (
+              {holdingsQ.data && holdingsQ.data.length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center gap-1 text-xs">
+                  {HOLDINGS_VIEWS.map((v) => (
+                    <Button
+                      key={v.value}
+                      size="sm"
+                      variant={holdingsView === v.value ? "default" : "outline"}
+                      onClick={() => setHoldingsView(v.value)}
+                    >
+                      {v.label} ({holdingsRows(holdingsQ.data, v.value).length})
+                    </Button>
+                  ))}
+                  <span className="ml-auto text-muted-foreground">
+                    P&L{" "}
+                    <span className={holdingsShownPnl >= 0 ? "pnl-positive" : "pnl-negative"}>
+                      {formatCurrency(holdingsShownPnl, "INR")}
+                    </span>
+                  </span>
+                </div>
+              )}
+              {holdingsShown.length > 0 ? (
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-muted-foreground text-left">
@@ -282,9 +325,16 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {holdingsQ.data.map((h) => (
+                    {holdingsShown.map((h) => (
                       <tr key={h.tradingsymbol} className="border-b">
-                        <td className="py-2 pr-3 font-mono">{h.tradingsymbol}</td>
+                        <td className="py-2 pr-3 font-mono">
+                          {h.tradingsymbol}
+                          {holdingsView === "all" && (h.centurion_qty ?? 0) > 0 && (
+                            <Badge variant="outline" className="ml-2 font-sans text-[0.65rem]">
+                              Centurion {h.centurion_qty}
+                            </Badge>
+                          )}
+                        </td>
                         <td className="py-2 pr-3">{h.quantity}</td>
                         <td className="py-2 pr-3">{formatCurrency(h.average_price, "INR")}</td>
                         <td className="py-2 pr-3">{formatCurrency(h.last_price, "INR")}</td>
@@ -299,7 +349,9 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
                   </tbody>
                 </table>
               ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">No holdings found</p>
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  {HOLDINGS_VIEWS.find((v) => v.value === holdingsView)?.empty}
+                </p>
               )}
             </div>
           )}
