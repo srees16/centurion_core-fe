@@ -702,6 +702,12 @@ function PaperValidationPanel({ book }: { book: string }) {
     drawdown: s.max_drawdown_pct,
   }));
 
+  // Daily P&L chart: last 30 sessions; bar height is the size of the day's P&L, colour its sign.
+  const recentPnl = snapshots.slice(-30);
+  const maxAbsPnl = Math.max(...recentPnl.map((x) => Math.abs(x.day_pnl)), 1);
+  const shortDate = (d: string) =>
+    new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
   // Compute annualised CAGR from snapshots
   const tradingDays = snapshots.length;
   const years = tradingDays / 252;
@@ -798,21 +804,39 @@ function PaperValidationPanel({ book }: { book: string }) {
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <TrendingDown className="h-4 w-4" /> Daily P&L
           </h3>
-          <div className="flex items-end gap-[2px] h-24">
-            {snapshots.slice(-30).map((s) => {
-              const maxAbs = Math.max(...snapshots.slice(-30).map((x) => Math.abs(x.day_pnl)), 1);
-              const h = Math.abs(s.day_pnl) / maxAbs * 80;
-              return (
-                <div
-                  key={s.date}
-                  title={`${s.date}: ${formatCurrency(s.day_pnl, "INR")}`}
-                  className={`flex-1 min-w-[3px] rounded-t ${s.day_pnl >= 0 ? "bg-green-500" : "bg-red-500"}`}
-                  style={{ height: `${Math.max(h, 2)}px`, alignSelf: "flex-end" }}
-                />
-              );
-            })}
+          <div className="flex gap-2">
+            {/* y-axis: title and scale */}
+            <div className="flex items-center">
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap [writing-mode:vertical-rl] rotate-180">
+                Daily P&L (₹)
+              </span>
+            </div>
+            <div className="flex flex-col justify-between h-24 text-[10px] text-muted-foreground text-right tabular-nums">
+              <span>±{formatCurrency(maxAbsPnl, "INR")}</span>
+              <span>₹0</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-end gap-[2px] h-24 border-l border-b border-border">
+                {recentPnl.map((s) => (
+                  <div
+                    key={s.date}
+                    title={`${s.date}: ${formatCurrency(s.day_pnl, "INR")}`}
+                    className={`flex-1 min-w-[3px] rounded-t ${s.day_pnl >= 0 ? "bg-green-500" : "bg-red-500"}`}
+                    style={{ height: `${Math.max(Math.abs(s.day_pnl) / maxAbsPnl * 100, 2)}%`, alignSelf: "flex-end" }}
+                  />
+                ))}
+              </div>
+              {/* x-axis: first and last session, then the title */}
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1 tabular-nums">
+                <span>{shortDate(recentPnl[0].date)}</span>
+                <span>{shortDate(recentPnl[recentPnl.length - 1].date)}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center">Trading day</p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Last 30 trading days — hover for details</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Last 30 trading days — bar height is the size of the day&apos;s P&L: green a gain, red a loss. Hover for details.
+          </p>
         </div>
       )}
 
