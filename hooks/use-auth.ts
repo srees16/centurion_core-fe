@@ -14,6 +14,15 @@ interface AuthState {
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   heartbeat: () => void;
+  /** Keep this session on a fresh token (a password change ends the older ones, MU2). */
+  setToken: (token: string) => void;
+}
+
+function storeToken(token: string) {
+  localStorage.setItem("access_token", token);
+  localStorage.setItem("refresh_token", token);
+  // Set cookie so Next.js middleware can read the token server-side
+  document.cookie = `access_token=${token}; path=/; max-age=${8 * 60 * 60}; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
 }
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes inactivity
@@ -30,11 +39,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       username,
       password,
     });
-    localStorage.setItem("access_token", data.access_token);
-    localStorage.setItem("refresh_token", data.refresh_token);
+    storeToken(data.access_token);
     localStorage.setItem("login_time", String(Date.now()));
-    // Set cookie so Next.js middleware can read the token server-side
-    document.cookie = `access_token=${data.access_token}; path=/; max-age=${8 * 60 * 60}; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
     set({
       user: data.user,
       isAuthenticated: true,
@@ -100,4 +106,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   heartbeat: () => {
     set({ lastActivity: Date.now() });
   },
+
+  setToken: (token: string) => storeToken(token),
 }));
