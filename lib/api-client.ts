@@ -24,6 +24,10 @@ class ApiClient {
 
   private async handleResponse<T>(res: Response): Promise<T> {
     if (res.status === 401) {
+      // A refused sign-in is an answer for the login form, not an expired session to reload away
+      if (res.url.endsWith("/api/v1/auth/login")) {
+        throw new Error("Invalid username or password");
+      }
       if (typeof window !== "undefined") {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
