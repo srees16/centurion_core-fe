@@ -27,6 +27,8 @@ class ApiClient {
       if (typeof window !== "undefined") {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("login_time");
+        document.cookie = "access_token=; path=/; max-age=0";
         window.location.href = "/login";
       }
       throw new Error("Unauthorized");

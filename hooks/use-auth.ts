@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { api } from "@/lib/api-client";
+import { DW_TOKEN_KEY, DW_TOKEN_TS_KEY } from "@/hooks/use-drivewealth";
 import type { AuthUser, LoginResponse } from "@/lib/types";
 
 interface AuthState {
@@ -51,6 +52,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("login_time");
+    localStorage.removeItem(DW_TOKEN_KEY);
+    localStorage.removeItem(DW_TOKEN_TS_KEY);
     document.cookie = "access_token=; path=/; max-age=0";
     set({ user: null, isAuthenticated: false, isLoading: false });
   },

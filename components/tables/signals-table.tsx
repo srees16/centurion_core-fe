@@ -71,7 +71,7 @@ const columns: ColumnDef<TradingSignal, unknown>[] = [
     header: "Source",
     cell: ({ row }) => {
       const url = row.original.news_item.url;
-      return url ? (
+      return url && /^https?:\/\//i.test(url) ? (
         <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs truncate max-w-[100px] block">
           {row.original.news_item.source}
         </a>

@@ -72,7 +72,7 @@ export function StreamingAnswer({ answer, chunks, isStreaming }: StreamingAnswer
         className="rounded-lg border bg-card p-4 max-h-[420px] overflow-y-auto prose prose-sm dark:prose-invert"
       >
         {answer ? (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} disallowedElements={["img"]}>{answer}</ReactMarkdown>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />

@@ -13,8 +13,14 @@ export interface PaperTradingState {
   updated_at: string;
 }
 
+/** The signed-in user's token: the route checks it with the backend before reading or changing the switch. */
+function authHeaders(): Record<string, string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function fetchState(): Promise<PaperTradingState> {
-  const res = await fetch("/api/paper-trading");
+  const res = await fetch("/api/paper-trading", { headers: authHeaders() });
   if (!res.ok) throw new Error("Failed to fetch paper trading state");
   return res.json();
 }
@@ -22,7 +28,7 @@ async function fetchState(): Promise<PaperTradingState> {
 async function toggleState(action: "start" | "stop", weeks?: number) {
   const res = await fetch("/api/paper-trading", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ action, weeks }),
   });
   if (!res.ok) throw new Error("Failed to toggle paper trading");
