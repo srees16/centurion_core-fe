@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthStore } from "@/hooks/use-auth";
 import { LiveQuotesTable } from "@/components/tables/live-quotes-table";
 import { QuickTradePanel } from "@/components/kite/quick-trade-panel";
 import { KiteAccountsPanel } from "@/components/kite/kite-accounts-panel";
@@ -439,7 +440,14 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
   );
 }
 
+/** Fly Kite: your own Kite session and dashboard, then the connected accounts; a signed-up user
+ *  (MU2) sees only the panel of their own Zerodha account, never yours. */
 export default function FlyKitePage() {
+  const isUser = useAuthStore((s) => s.user?.role === "user");
+  return isUser ? <KiteAccountsPanel /> : <OperatorFlyKite />;
+}
+
+function OperatorFlyKite() {
   const sessionQ = useKiteSessionStatus();
   const startSession = useKiteSessionStart();
   const completeSession = useKiteSessionComplete();

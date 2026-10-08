@@ -5,6 +5,9 @@ import { useAuthStore } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
 import { useCarverConfig, useUpdateCarverConfig } from "@/hooks/use-config";
 import { api } from "@/lib/api-client";
+import { passwordOk, passwordRules } from "@/lib/password-policy";
+import { PasswordChecklist } from "@/components/auth/auth-card";
+import { DeleteAccountSection } from "@/components/auth/delete-account";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,7 +44,7 @@ function ConfigField({
 }
 
 export default function SettingsPage() {
-  const { user } = useAuthStore();
+  const { user, setToken } = useAuthStore();
   const { theme, setTheme } = useTheme();
 
   // Password change state
@@ -95,8 +98,8 @@ export default function SettingsPage() {
     setPwdError(null);
     setPwdSuccess(false);
 
-    if (newPassword.length < 6) {
-      setPwdError("New password must be at least 6 characters");
+    if (!passwordOk(newPassword, user?.username, user?.name)) {
+      setPwdError("The new password does not meet the rules below it");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -106,10 +109,12 @@ export default function SettingsPage() {
 
     setPwdSubmitting(true);
     try {
-      await api.post("/api/v1/auth/change-password", {
+      const res = await api.post<{ access_token?: string }>("/api/v1/auth/change-password", {
         current_password: currentPassword,
         new_password: newPassword,
       });
+      // A signed-up user's other sessions end; this one continues on the fresh token (MU2)
+      if (res.access_token) setToken(res.access_token);
       setPwdSuccess(true);
       setCurrentPassword("");
       setNewPassword("");
@@ -138,8 +143,9 @@ export default function SettingsPage() {
         </div>
         {user && (
           <div>
-            <Label className="text-muted-foreground text-xs">Username</Label>
-            <p className="text-sm font-medium mt-0.5">@{user.username}</p>
+            <Label className="text-muted-foreground text-xs">{user.username.includes("@") ? "Email" : "Username"}</Label>
+            <p className="text-sm font-medium mt-0.5">{user.username.includes("@") ? user.username : `@${user.username}`}</p>
+            {user.name !== user.username && <p className="text-sm text-muted-foreground">{user.name}</p>}
           </div>
         )}
       </section>
@@ -225,6 +231,7 @@ export default function SettingsPage() {
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
             />
+            <PasswordChecklist rules={passwordRules(newPassword, user?.username, user?.name)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirm New Password</Label>
@@ -326,6 +333,9 @@ export default function SettingsPage() {
           </div>
         )}
       </section>
+
+      {/* ── Delete account (a signed-up user, MU2) ────────── */}
+      {user?.role === "user" && <DeleteAccountSection />}
     </div>
   );
 }

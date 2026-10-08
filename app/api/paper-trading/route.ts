@@ -1,14 +1,15 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
-/** Whether the request carries a valid Centurion session: the backend verifies its Bearer token. */
+/** Whether the request carries a valid session of the operator's own logins: the backend verifies its
+ *  Bearer token.  A signed-up user (role "user", MU2) has no paper validation, so is refused. */
 async function signedIn(req: NextRequest): Promise<boolean> {
   const auth = req.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return false;
   const backend = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001";
   try {
     const res = await fetch(`${backend}/api/v1/auth/me`, { headers: { Authorization: auth }, cache: "no-store" });
-    return res.ok;
+    return res.ok && (await res.json()).role !== "user";
   } catch {
     return false;
   }

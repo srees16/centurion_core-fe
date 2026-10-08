@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/api"];
+// Signed-out pages: sign-in, and self-service sign-up, activation and password reset (MU2)
+const PUBLIC_PATHS = ["/login", "/signup", "/activate", "/forgot-password", "/reset-password", "/api"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
