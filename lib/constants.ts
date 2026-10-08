@@ -241,7 +241,7 @@ export const IND_SUB_PAGES = [
   { key: "screener", label: "Screener", href: "/ind-stocks/screener" },
   { key: "verdict", label: "Verdict", href: "/ind-stocks/verdict" },
   { key: "backtest", label: "Backtest", href: "/ind-stocks/backtest" },
-  { key: "trade-monitor", label: "Trade Monitor", href: "/ind-stocks/trade-monitor" },
+  { key: "trade-center", label: "Trade Center", href: "/ind-stocks/trade-center" },
   { key: "options", label: "Options", href: "/ind-stocks/options" },
   { key: "portfolio", label: "Portfolio", href: "/ind-stocks/portfolio" },
   { key: "compounder", label: "Compounder", href: "/ind-stocks/compounder" },

@@ -19,6 +19,11 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    // The Trade Monitor page was renamed Trade Center (8 Oct 2026): old links and bookmarks,
+    // ?tab= and ?book= included, land on the new page
+    return [{ source: "/ind-stocks/trade-monitor", destination: "/ind-stocks/trade-center", permanent: true }];
+  },
   async rewrites() {
     // In production (Vercel), NEXT_PUBLIC_API_URL is set and the browser calls
     // the backend directly — no rewrite proxy needed. Vercel's edge proxy has
