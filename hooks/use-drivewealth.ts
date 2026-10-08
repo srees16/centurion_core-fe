@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type { DWCredentials, DWAccount, DWPosition } from "@/lib/types";
 
-const DW_TOKEN_KEY = "dw_token";
-const DW_TOKEN_TS_KEY = "dw_token_ts";
+export const DW_TOKEN_KEY = "dw_token";
+export const DW_TOKEN_TS_KEY = "dw_token_ts";
 const DW_TOKEN_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
 
 function isDWTokenExpired(): boolean {
