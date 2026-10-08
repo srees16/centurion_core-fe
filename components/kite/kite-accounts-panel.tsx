@@ -588,7 +588,6 @@ function AccountRow({ account: a, setup, isUser, onAsk }: {
 }) {
   const remove = useRemoveKiteAccount();
   const [showHoldings, setShowHoldings] = useState(false);
-  const own = a.id === "primary";
   const at = a.login_at ? new Date(a.login_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
   const copyLink = () =>
     navigator.clipboard.writeText(a.login_url).then(
@@ -605,7 +604,7 @@ function AccountRow({ account: a, setup, isUser, onAsk }: {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2">
             <p className="truncate font-medium">{a.name}</p>
-            <span className="font-mono text-xs text-muted-foreground">{a.zerodha_user_id || "server's user id"}</span>
+            <span className="font-mono text-xs text-muted-foreground">{a.zerodha_user_id}</span>
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {a.logged_in_today ? (
@@ -613,9 +612,7 @@ function AccountRow({ account: a, setup, isUser, onAsk }: {
             ) : (
               <Chip tone="muted" icon={Clock}>Not logged in today</Chip>
             )}
-            {own ? (
-              <Chip tone="muted">Your account</Chip>
-            ) : a.consented ? (
+            {a.consented ? (
               <Chip tone="ok" icon={FileCheck}>Terms accepted</Chip>
             ) : (
               <Chip tone="wait" icon={FileCheck}>Terms pending</Chip>
@@ -626,95 +623,107 @@ function AccountRow({ account: a, setup, isUser, onAsk }: {
           <Button size="sm" variant={a.logged_in_today ? "outline" : "default"} onClick={() => openLogin(a.login_url)}>
             <LogIn className="mr-1 h-3.5 w-3.5" /> Log in
           </Button>
-          {!own && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`More for ${a.name}`}>
-                  <Ellipsis className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {!isUser && (
-                  <DropdownMenuItem onSelect={copyLink}>
-                    <Link2 className="mr-2 h-3.5 w-3.5" /> Copy login link
-                  </DropdownMenuItem>
-                )}
-                {!isUser && <DropdownMenuSeparator />}
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  disabled={remove.isPending}
-                  onSelect={() =>
-                    onAsk({
-                      title: `Remove ${a.name}?`,
-                      description: "Only an account that has never traded can be removed; one that has is disconnected instead.",
-                      confirm: "Remove",
-                      destructive: true,
-                      onConfirm: () =>
-                        remove.mutate(a.id, {
-                          onError: (err) => toast({ title: "Not removed", description: errorText(err), variant: "destructive" }),
-                        }),
-                    })
-                  }
-                >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Remove
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`More for ${a.name}`}>
+                <Ellipsis className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!isUser && (
+                <DropdownMenuItem onSelect={copyLink}>
+                  <Link2 className="mr-2 h-3.5 w-3.5" /> Copy login link
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              )}
+              {!isUser && <DropdownMenuSeparator />}
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                disabled={remove.isPending}
+                onSelect={() =>
+                  onAsk({
+                    title: `Remove ${a.name}?`,
+                    description: "Only an account that has never traded can be removed; one that has is disconnected instead.",
+                    confirm: "Remove",
+                    destructive: true,
+                    onConfirm: () =>
+                      remove.mutate(a.id, {
+                        onError: (err) => toast({ title: "Not removed", description: errorText(err), variant: "destructive" }),
+                      }),
+                  })
+                }
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" /> Remove
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {!own && (
-        <>
-          <ManageControls account={a} rungs={setup?.rungs ?? []} isUser={isUser} onAsk={onAsk} />
-          <button
-            type="button"
-            onClick={() => setShowHoldings((v) => !v)}
-            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-          >
-            <Wallet className="h-3.5 w-3.5" /> {showHoldings ? "Hide holdings" : "Holdings & funds"}
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", showHoldings && "rotate-180")} />
-          </button>
-          {showHoldings && (
-            <div className="animate-in fade-in-0 slide-in-from-top-1 duration-200">
-              <AccountHoldings account={a} />
-            </div>
-          )}
-        </>
+      <ManageControls account={a} rungs={setup?.rungs ?? []} isUser={isUser} onAsk={onAsk} />
+      <button
+        type="button"
+        onClick={() => setShowHoldings((v) => !v)}
+        className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+      >
+        <Wallet className="h-3.5 w-3.5" /> {showHoldings ? "Hide holdings" : "Holdings & funds"}
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", showHoldings && "rotate-180")} />
+      </button>
+      {showHoldings && (
+        <div className="animate-in fade-in-0 slide-in-from-top-1 duration-200">
+          <AccountHoldings account={a} />
+        </div>
       )}
     </div>
   );
 }
 
 /**
- * Zerodha accounts Centurion connects (U33, MU1): yours and any user's, all on the same criteria.
- * Each holder uses their own Kite Connect app; Centurion keeps its API key and secret, never a
- * password or TOTP, the holder logs in on Zerodha's page each day and accepts the terms there.
- * A signed-up user (MU2) sees only their own account and may connect one, optionally.
+ * Zerodha accounts Centurion connects (U33, MU1) other than yours, all on the same criteria; your own
+ * account is the Fly Kite dashboard above, so it is not listed here.  Each holder uses their own Kite
+ * Connect app; Centurion keeps its API key and secret, never a password or TOTP, the holder logs in on
+ * Zerodha's page each day and accepts the terms there.  With nobody else's account connected the panel
+ * is one line with Add account.  A signed-up user (MU2) sees only their own account and may connect one.
  */
 export function KiteAccountsPanel() {
   const accountsQ = useKiteAccounts();
   const [adding, setAdding] = useState(false);
   const [ask, setAsk] = useState<Ask | null>(null);
 
-  const isUser = useAuthStore((s) => s.user?.role === "user");
+  const role = useAuthStore((s) => s.user?.role);
+  const isUser = role === "user";
   const setup = accountsQ.data?.setup;
-  const accounts = accountsQ.data?.accounts ?? [];
-  const canAdd = !isUser || (accountsQ.isSuccess && accounts.length === 0);
-  const hasOthers = accounts.some((a) => a.id !== "primary");
+  const others = (accountsQ.data?.accounts ?? []).filter((a) => a.id !== "primary");
+  const canAdd = role === "admin" || (isUser && accountsQ.isSuccess && others.length === 0);
+  const addButton = canAdd && (
+    <AddAccountDialog setup={setup} isUser={isUser} open={adding} onOpenChange={setAdding} />
+  );
+
+  if (!isUser && others.length === 0) {
+    return (
+      <div className="content-panel mx-auto flex max-w-2xl items-center justify-between gap-3 px-6 py-3">
+        <p className="flex min-w-0 items-center gap-2 text-sm">
+          <Users className="h-4 w-4 shrink-0" /> Other Zerodha accounts:
+          <span className="truncate text-muted-foreground">
+            {accountsQ.isLoading ? "loading…" : accountsQ.isError ? errorText(accountsQ.error) : "none connected"}
+          </span>
+        </p>
+        {addButton}
+      </div>
+    );
+  }
 
   return (
     <div className="content-panel mx-auto max-w-2xl space-y-5 p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="flex items-center gap-2 text-base font-semibold">
-            <Users className="h-4 w-4" /> {isUser ? "Your Zerodha account" : "Zerodha accounts"}
+            <Users className="h-4 w-4" /> {isUser ? "Your Zerodha account" : "Other Zerodha accounts"}
           </h3>
           <p className="text-xs text-muted-foreground">
-            {isUser ? "Optional. Everything else in Centurion works without it." : "Accounts Centurion reads and manages."}
+            {isUser ? "Optional. Everything else in Centurion works without it." : "Accounts Centurion reads and manages besides yours."}
           </p>
         </div>
-        {canAdd && <AddAccountDialog setup={setup} isUser={isUser} open={adding} onOpenChange={setAdding} />}
+        {addButton}
       </div>
 
       <Requirements setup={setup} />
@@ -727,7 +736,7 @@ export function KiteAccountsPanel() {
       )}
       {accountsQ.isError && <p className="text-sm text-destructive">{errorText(accountsQ.error)}</p>}
 
-      {isUser && accountsQ.isSuccess && accounts.length === 0 && (
+      {isUser && accountsQ.isSuccess && others.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-8 text-center">
           <Link2 className="h-6 w-6 text-muted-foreground" />
           <p className="font-medium">No Zerodha account connected</p>
@@ -737,15 +746,15 @@ export function KiteAccountsPanel() {
         </div>
       )}
 
-      {accounts.length > 0 && (
+      {others.length > 0 && (
         <div className="space-y-3">
-          {accounts.map((a) => (
+          {others.map((a) => (
             <AccountRow key={a.id} account={a} setup={setup} isUser={isUser} onAsk={setAsk} />
           ))}
         </div>
       )}
 
-      {hasOthers && (
+      {others.length > 0 && (
         <p className="text-xs text-muted-foreground">
           <strong>Dry run</strong> builds each evening&apos;s orders and sends none. <strong>Live</strong> sends them,
           after 5 clean dry runs. Capital moves up the ladder one rung at a time.
