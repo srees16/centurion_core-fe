@@ -26,7 +26,9 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
-/** A centred panel that fades and zooms in over a blurred backdrop; scrolls inside on small screens. */
+/** A centred panel that fades and zooms in over a blurred backdrop; scrolls inside on small screens.
+ *  Its one column may shrink to the panel (minmax(0, 1fr)), so long content wraps or truncates
+ *  instead of widening the panel into a horizontal scrollbar. */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -36,7 +38,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4",
+        "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg grid-cols-[minmax(0,1fr)] -translate-x-1/2 -translate-y-1/2 gap-4",
         "max-h-[90vh] overflow-y-auto rounded-xl border bg-popover p-6 text-popover-foreground shadow-xl duration-200",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",

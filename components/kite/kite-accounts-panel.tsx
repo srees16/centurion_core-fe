@@ -141,7 +141,7 @@ function CopyValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-2 rounded-md border bg-background/60 px-2 py-1.5">
       <span className="w-24 shrink-0 text-xs text-muted-foreground">{label}</span>
-      <code className="min-w-0 flex-1 truncate text-xs">{value}</code>
+      <code className="min-w-0 flex-1 break-all text-xs">{value}</code>
       <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={copy} aria-label={`Copy ${label}`}>
         {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
       </Button>
