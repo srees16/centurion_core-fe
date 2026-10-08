@@ -1,6 +1,21 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
+/** Whether the request carries a valid Centurion session: the backend verifies its Bearer token. */
+async function signedIn(req: NextRequest): Promise<boolean> {
+  const auth = req.headers.get("authorization");
+  if (!auth?.startsWith("Bearer ")) return false;
+  const backend = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001";
+  try {
+    const res = await fetch(`${backend}/api/v1/auth/me`, { headers: { Authorization: auth }, cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+const UNAUTHORIZED = () => NextResponse.json({ error: "Sign in to do that" }, { status: 401 });
+
 function getDb() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL not configured");
@@ -35,7 +50,8 @@ async function ensureTable() {
 }
 
 // GET — return current paper trading state
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!(await signedIn(req))) return UNAUTHORIZED();
   try {
     const sql = getDb();
     await ensureTable();
@@ -55,15 +71,14 @@ export async function GET() {
 
     return NextResponse.json(state);
   } catch (err) {
-    return NextResponse.json(
-      { error: String(err) },
-      { status: 500 }
-    );
+    console.error("paper-trading GET failed", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
 // POST — start or stop paper trading
 export async function POST(req: NextRequest) {
+  if (!(await signedIn(req))) return UNAUTHORIZED();
   try {
     const body = await req.json();
     const action = body.action as string; // "start" | "stop"
@@ -71,7 +86,7 @@ export async function POST(req: NextRequest) {
     await ensureTable();
 
     if (action === "start") {
-      const weeks = body.weeks ?? 4;
+      const weeks = Math.min(Math.max(Math.trunc(Number(body.weeks ?? 4)) || 4, 1), 52);
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + weeks * 7);
       const expiresIso = expiresAt.toISOString();
@@ -112,9 +127,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (err) {
-    return NextResponse.json(
-      { error: String(err) },
-      { status: 500 }
-    );
+    console.error("paper-trading POST failed", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

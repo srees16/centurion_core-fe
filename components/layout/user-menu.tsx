@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -17,11 +18,13 @@ export function UserMenu() {
   const { user, logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   if (!user) return null;
 
   const handleLogout = async () => {
     await logout();
+    queryClient.clear(); // the next sign-in must not see this session's holdings
     router.push("/login");
   };
 
