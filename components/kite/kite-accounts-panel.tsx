@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ExternalLink, Plus, Trash2, Users, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, Lock, Plus, Trash2, Users, Wallet, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   useAddKiteAccount,
   useDisconnectKiteAccount,
+  useKiteAccountHoldings,
   useKiteAccounts,
   useRemoveKiteAccount,
   useUpdateKiteAccount,
 } from "@/hooks/use-kite";
-import type { KiteAccount, KiteAccountMode, KiteDisconnect, NewKiteAccount } from "@/lib/types";
+import type { KiteAccount, KiteAccountMode, KiteAccountsResponse, KiteDisconnect, NewKiteAccount } from "@/lib/types";
 
-const EMPTY: NewKiteAccount = { name: "", relation: "spouse", zerodha_user_id: "", api_key: "", api_secret: "", email: "" };
+const EMPTY: NewKiteAccount = { name: "", zerodha_user_id: "", api_key: "", api_secret: "", email: "" };
 const MODES: { value: KiteAccountMode; label: string }[] = [
   { value: "off", label: "Off" },
   { value: "dry_run", label: "Dry run" },
@@ -80,7 +81,7 @@ function LoginState({ account }: { account: KiteAccount }) {
   );
 }
 
-/** Whether Centurion trades a family account and the ladder rung it may use (FA2); Off asks what happens to its positions (FA3). */
+/** Whether Centurion trades a connected account and the ladder rung it may use (FA2); Off asks what happens to its positions (FA3). */
 function ManageControls({ account, rungs }: { account: KiteAccount; rungs: number[] }) {
   const update = useUpdateKiteAccount();
   const disconnect = useDisconnectKiteAccount();
@@ -90,6 +91,7 @@ function ManageControls({ account, rungs }: { account: KiteAccount; rungs: numbe
   const mode = account.mode ?? "off";
   const capital = account.capital ?? 0;
   const unwinding = account.unwind_sessions ?? 0;
+  const locked = Boolean(account.trading_lock);
 
   const setMode = (next: KiteAccountMode) => {
     if (next === mode) return;
@@ -116,7 +118,7 @@ function ManageControls({ account, rungs }: { account: KiteAccount; rungs: numbe
             type="button"
             size="sm"
             variant={mode === m.value ? "default" : "outline"}
-            disabled={update.isPending || (m.value !== "off" && !capital)}
+            disabled={update.isPending || (m.value !== "off" && (!capital || locked))}
             onClick={() => setMode(m.value)}
           >
             {m.label}
@@ -138,6 +140,11 @@ function ManageControls({ account, rungs }: { account: KiteAccount; rungs: numbe
       {unwinding > 0 && (
         <span className="text-amber-600 dark:text-amber-400">
           Selling out · {unwinding === 1 ? "all at the next open" : `${unwinding} sessions left`}
+        </span>
+      )}
+      {locked && (
+        <span className="inline-flex w-full items-start gap-1 text-amber-600 dark:text-amber-400">
+          <Lock className="mt-0.5 h-3 w-3 shrink-0" /> Trading locked: {account.trading_lock}
         </span>
       )}
       {update.isError && <span className="text-destructive">{errorText(update.error)}</span>}
@@ -200,10 +207,102 @@ function ManageControls({ account, rungs }: { account: KiteAccount; rungs: numbe
   );
 }
 
+/** What every account needs before Centurion trades it (MU1): the same for everyone, with the terms the holder accepts. */
+function Prerequisites({ setup }: { setup?: KiteAccountsResponse["setup"] }) {
+  const registered = setup !== undefined && setup.registration_missing.length === 0;
+  return (
+    <div className="space-y-1 rounded-md border bg-secondary/30 p-3 text-xs text-muted-foreground">
+      <p className="font-medium text-foreground">What every account needs</p>
+      <ol className="list-decimal space-y-1 pl-4">
+        <li>A Zerodha trading and demat account, holding the funds Centurion may use.</li>
+        <li>
+          The holder&apos;s own <strong>Kite Connect</strong> app on developers.kite.trade (the paid Connect plan; the
+          free Personal plan has no live prices), with redirect URL{" "}
+          <code className="rounded bg-secondary px-1 break-all">{setup?.redirect_url ?? "…"}</code> and IP whitelist{" "}
+          <code className="rounded bg-secondary px-1">{setup?.static_ip ?? "the static IP on your own Kite app"}</code>.
+          Its API key and secret are entered here.
+        </li>
+        <li>A Kite login on Zerodha&apos;s page each trading day, from the emailed link (it lapses at 6 am).</li>
+        <li>
+          After the first login, the holder ticks the terms and clicks <strong>I agree</strong>.
+        </li>
+        <li>
+          Centurion&apos;s exchange empanelment and SEBI registration:{" "}
+          {registered ? (
+            <span className="text-green-600 dark:text-green-400">in place</span>
+          ) : (
+            <span className="text-amber-600 dark:text-amber-400">
+              not in place yet, so connected accounts are read-only
+            </span>
+          )}
+          .
+        </li>
+      </ol>
+      <p>Centurion keeps the app&apos;s key and secret encrypted, never a password or TOTP.</p>
+      {setup && (
+        <details>
+          <summary className="cursor-pointer">The terms (version {setup.terms.version})</summary>
+          <ol className="list-decimal space-y-1 pl-4 pt-1">
+            {setup.terms.items.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/** A connected account's holdings and available funds, read with its holder's login today (an admin only). */
+function AccountHoldings({ account }: { account: KiteAccount }) {
+  const q = useKiteAccountHoldings(account.id);
+  if (q.isLoading) return <p className="w-full text-xs text-muted-foreground">Loading holdings…</p>;
+  if (q.isError) return <p className="w-full text-xs text-destructive">{errorText(q.error)}</p>;
+  const rows = q.data?.holdings ?? [];
+  const funds = q.data?.available_funds;
+  return (
+    <div className="w-full space-y-1 text-xs">
+      <p className="text-muted-foreground">
+        Available funds {funds != null ? inr(Math.round(funds)) : "unknown"} · {rows.length} holding(s)
+      </p>
+      {rows.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="text-muted-foreground">
+              <tr>
+                <th className="text-left font-normal">Symbol</th>
+                <th className="text-right font-normal">Qty</th>
+                <th className="text-right font-normal">Avg</th>
+                <th className="text-right font-normal">LTP</th>
+                <th className="text-right font-normal">P&amp;L</th>
+                <th className="text-right font-normal">Centurion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((h) => (
+                <tr key={h.tradingsymbol}>
+                  <td>{h.tradingsymbol}</td>
+                  <td className="text-right">{h.quantity + (h.t1_quantity ?? 0)}</td>
+                  <td className="text-right">{inr(h.average_price)}</td>
+                  <td className="text-right">{inr(h.last_price)}</td>
+                  <td className={`text-right ${h.pnl < 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
+                    {inr(Math.round(h.pnl))}
+                  </td>
+                  <td className="text-right">{h.centurion_qty || "–"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
- * Zerodha accounts Centurion may connect (decision U33): yours and your family's.
- * Each family member uses their own Kite Connect app; Centurion keeps its API key and
- * secret, never a password or TOTP, and the holder logs in on Zerodha's page each day.
+ * Zerodha accounts Centurion connects (U33, MU1): yours and any user's, all on the same criteria.
+ * Each holder uses their own Kite Connect app; Centurion keeps its API key and secret, never a
+ * password or TOTP, the holder logs in on Zerodha's page each day and accepts the terms there.
  */
 export function KiteAccountsPanel() {
   const accountsQ = useKiteAccounts();
@@ -211,10 +310,16 @@ export function KiteAccountsPanel() {
   const remove = useRemoveKiteAccount();
   const [form, setForm] = useState<NewKiteAccount>(EMPTY);
   const [showForm, setShowForm] = useState(false);
+  const [holdingsOf, setHoldingsOf] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   const setup = accountsQ.data?.setup;
-  const relations = setup?.relations ?? ["spouse", "child", "parent"];
-  const hasFamily = (accountsQ.data?.accounts.length ?? 0) > 1;
+  const hasOthers = (accountsQ.data?.accounts.length ?? 0) > 1;
+  const copyLink = (a: KiteAccount) =>
+    navigator.clipboard.writeText(a.login_url).then(
+      () => setCopied(a.id),
+      () => window.prompt("Copy the login link", a.login_url),
+    );
   const field = (key: keyof NewKiteAccount) => ({
     value: form[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: e.target.value }),
@@ -236,9 +341,11 @@ export function KiteAccountsPanel() {
           <Users className="h-4 w-4" /> Zerodha accounts
         </h3>
         <Button variant="outline" size="sm" onClick={() => setShowForm((v) => !v)}>
-          <Plus className="h-4 w-4 mr-1" /> Add family account
+          <Plus className="h-4 w-4 mr-1" /> Add account
         </Button>
       </div>
+
+      <Prerequisites setup={setup} />
 
       {accountsQ.isLoading && <p className="text-sm text-muted-foreground">Loading accounts…</p>}
       {accountsQ.isError && <p className="text-sm text-destructive">{errorText(accountsQ.error)}</p>}
@@ -250,13 +357,28 @@ export function KiteAccountsPanel() {
               <div className="min-w-[10rem] flex-1">
                 <p className="font-medium">{a.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {a.relation === "self" ? "your account" : a.relation} · {a.zerodha_user_id || "user id from the server"}
+                  {a.id === "primary" ? "your account" : a.consented ? "terms accepted" : "terms not accepted yet"} ·{" "}
+                  {a.zerodha_user_id || "user id from the server"}
                 </p>
               </div>
               <LoginState account={a} />
               <Button size="sm" onClick={() => openLogin(a.login_url)}>
                 <ExternalLink className="h-3.5 w-3.5 mr-1" /> Log in
               </Button>
+              {a.id !== "primary" && (
+                <Button size="sm" variant="outline" onClick={() => copyLink(a)} title="Send this to the holder">
+                  <Copy className="h-3.5 w-3.5 mr-1" /> {copied === a.id ? "Copied" : "Copy link"}
+                </Button>
+              )}
+              {a.id !== "primary" && (
+                <Button
+                  size="sm"
+                  variant={holdingsOf === a.id ? "default" : "outline"}
+                  onClick={() => setHoldingsOf(holdingsOf === a.id ? null : a.id)}
+                >
+                  <Wallet className="h-3.5 w-3.5 mr-1" /> Holdings
+                </Button>
+              )}
               {a.id !== "primary" && (
                 <Button
                   size="sm"
@@ -272,12 +394,13 @@ export function KiteAccountsPanel() {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
+              {holdingsOf === a.id && <AccountHoldings account={a} />}
               {a.id !== "primary" && <ManageControls account={a} rungs={setup?.rungs ?? []} />}
             </div>
           ))}
         </div>
       )}
-      {hasFamily && (
+      {hasOthers && (
         <p className="text-xs text-muted-foreground">
           <strong>Dry run</strong> builds each evening&apos;s orders from the account and sends none.{" "}
           <strong>Live</strong> places them, only while your own book is live and after the account&apos;s own go-live
@@ -291,50 +414,25 @@ export function KiteAccountsPanel() {
       {showForm && (
         <div className="space-y-4 rounded-lg border bg-secondary/30 p-4">
           <div className="space-y-1 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">How to connect a family member</p>
-            <p>
-              Only a <strong>spouse, dependent child or dependent parent</strong> may share your static IP (SEBI).
-            </p>
+            <p className="font-medium text-foreground">How to connect an account</p>
             <ol className="list-decimal space-y-1 pl-4">
-              <li>
-                They create a <strong>Connect</strong> app on developers.kite.trade (paid; the free Personal type has no
-                live prices) with redirect URL{" "}
-                <code className="rounded bg-secondary px-1 break-all">{setup?.redirect_url ?? "…"}</code> and IP whitelist{" "}
-                <code className="rounded bg-secondary px-1">{setup?.static_ip ?? "the static IP on your own Kite app"}</code>,
-                then copy its API key and secret.
-              </li>
+              <li>The holder creates their Kite Connect app as above and shares its API key and secret.</li>
               <li>Add the account below.</li>
               <li>
-                Click <strong>Log in</strong> on their row: they type their password and TOTP on Zerodha&apos;s page.
+                Send them the login link (<strong>Copy link</strong> on their row): they log in on Zerodha&apos;s page
+                and accept the terms.
               </li>
               <li>
-                Choose the capital (start at ₹6,00,000), then <strong>Dry run</strong>. Switch to <strong>Live</strong>{" "}
-                only after 5 clean dry runs.
+                Once trading is unlocked, choose the capital (start at ₹6,00,000), then <strong>Dry run</strong>.
+                Switch to <strong>Live</strong> only after 5 clean dry runs.
               </li>
             </ol>
-            <p>Centurion keeps the app&apos;s key and secret encrypted, never a password or TOTP.</p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="acct-name">Name</Label>
               <Input id="acct-name" placeholder="e.g. Priya" {...field("name")} />
-            </div>
-            <div className="space-y-1">
-              <Label>Relation</Label>
-              <div className="flex gap-1">
-                {relations.map((r) => (
-                  <Button
-                    key={r}
-                    type="button"
-                    size="sm"
-                    variant={form.relation === r ? "default" : "outline"}
-                    onClick={() => setForm({ ...form, relation: r })}
-                  >
-                    {r}
-                  </Button>
-                ))}
-              </div>
             </div>
             <div className="space-y-1">
               <Label htmlFor="acct-uid">Zerodha user ID</Label>
