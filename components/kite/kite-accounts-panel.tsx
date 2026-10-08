@@ -486,7 +486,7 @@ function ManageControls({ account, rungs, isUser, onAsk }: {
                   onClick={() => setMode(m.value)}
                   className={cn(
                     "rounded px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
-                    mode === m.value ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-secondary",
+                    mode === m.value ? "bg-primary text-primary-foreground shadow-xs" : "hover:bg-secondary",
                   )}
                 >
                   {m.label}

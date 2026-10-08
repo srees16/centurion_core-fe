@@ -108,7 +108,7 @@ function KiteLanding({
                 value={requestToken}
                 onChange={(e) => setRequestToken(e.target.value)}
                 placeholder="Paste request_token here…"
-                className="flex-1 px-3 py-2 text-sm rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 text-sm rounded-md border bg-background focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               />
               <Button
                 onClick={() => onSubmitToken(requestToken.trim())}

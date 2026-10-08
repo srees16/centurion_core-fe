@@ -1,6 +1,46 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/* Tailwind 4 (NX1) with the existing JS config: theme, the class-based dark mode and the animate plugin */
+@config "../tailwind.config.js";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tailwind 3 behaviour that Tailwind 4 changed: pointer on buttons, grey placeholders */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+}
+
+/* Tailwind 3's space-x / space-y, for the values the app uses (NX1).  Tailwind 4 puts a bottom margin on
+   every child but the last, which an inline child (a <label> over an input) ignores; Tailwind 3 put a
+   top margin on every visible child after the first.  The :where() rules undo Tailwind 4's at the same zero
+   specificity, later in the layer; the others are Tailwind 3's own rules.  Add a value here when using a new one. */
+@layer utilities {
+  :where(.space-y-0\.5 > *) { margin-block-end: 0; }
+  .space-y-0\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 0.5); margin-bottom: 0; }
+  :where(.space-y-1 > *) { margin-block-end: 0; }
+  .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 1); margin-bottom: 0; }
+  :where(.space-y-1\.5 > *) { margin-block-end: 0; }
+  .space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 1.5); margin-bottom: 0; }
+  :where(.space-y-2 > *) { margin-block-end: 0; }
+  .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 2); margin-bottom: 0; }
+  :where(.space-y-3 > *) { margin-block-end: 0; }
+  .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 3); margin-bottom: 0; }
+  :where(.space-y-4 > *) { margin-block-end: 0; }
+  .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 4); margin-bottom: 0; }
+  :where(.space-y-5 > *) { margin-block-end: 0; }
+  .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 5); margin-bottom: 0; }
+  :where(.space-y-6 > *) { margin-block-end: 0; }
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 6); margin-bottom: 0; }
+  :where(.space-y-8 > *) { margin-block-end: 0; }
+  .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: calc(var(--spacing) * 8); margin-bottom: 0; }
+  :where(.space-x-4 > *) { margin-inline-end: 0; }
+  .space-x-4 > :not([hidden]) ~ :not([hidden]) { margin-left: calc(var(--spacing) * 4); margin-right: 0; }
+}
 
 @layer base {
   :root {
@@ -175,7 +215,7 @@
 
 /* ── Metric Card ─────────────────────────────────────── */
 .metric-card {
-  @apply rounded-lg border bg-card p-3 shadow-sm;
+  @apply rounded-lg border bg-card p-3 shadow-xs;
 }
 .metric-card .metric-label {
   @apply text-xs font-medium text-muted-foreground uppercase tracking-wider;
