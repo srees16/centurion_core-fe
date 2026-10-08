@@ -29,7 +29,7 @@ export function NavButtons({ items }: NavButtonsProps) {
             className={cn(
               "px-3 py-1.5 text-sm rounded-md transition-colors font-medium",
               isActive
-                ? "bg-primary text-primary-foreground shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-secondary text-secondary-foreground hover:bg-accent"
             )}
           >
