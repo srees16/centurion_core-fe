@@ -8,6 +8,7 @@ import type {
   KiteSessionStatus,
   CarverStatus,
   KiteAccount,
+  KiteAccountHoldings,
   KiteAccountMode,
   KiteAccountsResponse,
   KiteDisconnect,
@@ -148,13 +149,22 @@ export function useCarverStatus() {
   });
 }
 
-// ── Zerodha accounts (decision U33): yours and your family's ──────────
+// ── Zerodha accounts (U33, MU1): yours and any user's, on the same criteria ──────────
 
 export function useKiteAccounts() {
   return useQuery({
     queryKey: ["kite-accounts"],
     queryFn: () => api.get<KiteAccountsResponse>("/api/v1/kite/accounts"),
     refetchInterval: 60000,
+  });
+}
+
+/** Another account's holdings (an admin's read of someone else's portfolio, MU1). */
+export function useKiteAccountHoldings(id: string) {
+  return useQuery({
+    queryKey: ["kite-account-holdings", id],
+    queryFn: () => api.get<KiteAccountHoldings>(`/api/v1/kite/accounts/${id}/holdings`),
+    retry: false,
   });
 }
 
