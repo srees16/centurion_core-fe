@@ -51,6 +51,17 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
     setMsg({ type: "error", text: err.message });
   };
 
+  /** Every tab places a real order: one confirmation, so a misclick never trades (SEC2). */
+  const submit = (o: KiteOrderPayload) => {
+    const price = o.order_type === "MARKET" ? "at market" : `at ₹${o.price ?? o.trigger_price}`;
+    const what = `${o.transaction_type} ${o.quantity} ${o.tradingsymbol} (${o.exchange}) ${o.order_type} ${price}`;
+    if (!window.confirm(`Place this REAL order in your Zerodha account?\n\n${what}`)) return;
+    placeOrder.mutate(o, {
+      onSuccess: (r) => handleResult(o.transaction_type, r),
+      onError: handleError,
+    });
+  };
+
   return (
     <div className="content-panel p-4 space-y-3">
       <h3 className="text-sm font-semibold">Quick Trade</h3>
@@ -79,12 +90,7 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
         <TabsContent value="quick" className="mt-3 space-y-2">
           <QuickTab
             symbols={sorted}
-            onPlace={(o) =>
-              placeOrder.mutate(o, {
-                onSuccess: (r) => handleResult(o.transaction_type, r),
-                onError: handleError,
-              })
-            }
+            onPlace={submit}
             isPending={placeOrder.isPending}
           />
         </TabsContent>
@@ -93,12 +99,7 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
         <TabsContent value="regular" className="mt-3 space-y-2">
           <RegularTab
             symbols={sorted}
-            onPlace={(o) =>
-              placeOrder.mutate(o, {
-                onSuccess: (r) => handleResult(o.transaction_type, r),
-                onError: handleError,
-              })
-            }
+            onPlace={submit}
             isPending={placeOrder.isPending}
           />
         </TabsContent>
@@ -107,12 +108,7 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
         <TabsContent value="cover" className="mt-3 space-y-2">
           <CoverTab
             symbols={sorted}
-            onPlace={(o) =>
-              placeOrder.mutate(o, {
-                onSuccess: (r) => handleResult(o.transaction_type, r),
-                onError: handleError,
-              })
-            }
+            onPlace={submit}
             isPending={placeOrder.isPending}
           />
         </TabsContent>
@@ -121,12 +117,7 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
         <TabsContent value="amo" className="mt-3 space-y-2">
           <AmoTab
             symbols={sorted}
-            onPlace={(o) =>
-              placeOrder.mutate(o, {
-                onSuccess: (r) => handleResult(o.transaction_type, r),
-                onError: handleError,
-              })
-            }
+            onPlace={submit}
             isPending={placeOrder.isPending}
           />
         </TabsContent>
