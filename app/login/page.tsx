@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuthStore } from "@/hooks/use-auth";
+import { api } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState("Signing in...");
+  const [resent, setResent] = useState<string | null>(null);
   const { login, isAuthenticated, checkAuth } = useAuthStore();
   const router = useRouter();
 
@@ -29,6 +32,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setResent(null);
     setIsSubmitting(true);
     setStatusMsg("Signing in...");
     // Show progressive feedback if backend is slow (cold start)
@@ -62,23 +66,44 @@ export default function LoginPage() {
               <AlertCircle className="h-4 w-4 shrink-0" /> {error}
             </div>
           )}
+          {error?.includes("not activated") && username.includes("@") && (
+            resent ? (
+              <p className="text-sm text-green-700 dark:text-green-400">{resent}</p>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() =>
+                  api
+                    .post<{ message: string }>("/api/v1/auth/resend-activation", { email: username })
+                    .then((r) => setResent(r.message))
+                    .catch((err) => setError(err instanceof Error ? err.message : "Could not send the email"))
+                }
+              >
+                Resend activation email
+              </Button>
+            )
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Email or username</Label>
               <Input
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                placeholder="you@example.com"
                 autoComplete="username"
                 autoFocus
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -100,6 +125,10 @@ export default function LoginPage() {
               <span>{statusMsg}</span>
             </div>
           )}
+
+          <p className="text-sm text-center text-muted-foreground">
+            New to Centurion? <Link href="/signup" className="text-primary hover:underline">Create an account</Link>
+          </p>
 
           <p className="text-xs text-center text-muted-foreground">
             Centurion Capital LLC — Enterprise Trading Platform

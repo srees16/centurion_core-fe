@@ -994,9 +994,10 @@ export interface KiteAccount {
   /** FA3: positions Centurion holds in the account, and sessions left while it sells out (0 = not disconnecting). */
   positions?: number;
   unwind_sessions?: number;
-  /** MU1: the holder accepted the current terms (always true for yours), and why trading is locked ("" = it is not). */
+  /** MU1: the holder accepted the current terms (always true for yours), and why each mode is locked
+   *  ("" = it is not): a dry run needs the terms, live orders also Centurion's registration (U35). */
   consented: boolean;
-  trading_lock: string;
+  locks: { dry_run: string; live: string };
   consent_version?: string;
   consent_at?: string;
 }

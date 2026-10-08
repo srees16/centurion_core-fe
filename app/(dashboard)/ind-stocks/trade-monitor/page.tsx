@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthStore } from "@/hooks/use-auth";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -1101,7 +1102,9 @@ function DailyDetailPanel({ book }: { book: string }) {
 
 export default function TradeMonitorPage() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") === "paper" ? "validation" : "active";
+  // A signed-up user (MU2) sees the trades, not the operator's paper validation or daily detail
+  const isUser = useAuthStore((s) => s.user?.role === "user");
+  const initialTab = searchParams.get("tab") === "paper" && !isUser ? "validation" : "active";
   const [tab, setTab] = useState(initialTab);
   // G12: which paper book the page shows (deployed, candidate, e4, ...)
   const [book, setBook] = useState(searchParams.get("book") ?? "deployed");
@@ -1156,12 +1159,16 @@ export default function TradeMonitorPage() {
           <TabsTrigger value="closed">
             Closed ({closed.length})
           </TabsTrigger>
-          <TabsTrigger value="validation">
-            Paper Validation
-          </TabsTrigger>
-          <TabsTrigger value="daily-detail">
-            Daily Detail
-          </TabsTrigger>
+          {!isUser && (
+            <TabsTrigger value="validation">
+              Paper Validation
+            </TabsTrigger>
+          )}
+          {!isUser && (
+            <TabsTrigger value="daily-detail">
+              Daily Detail
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
@@ -1182,13 +1189,17 @@ export default function TradeMonitorPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="validation" className="mt-4">
-          <PaperValidationPanel book={book} />
-        </TabsContent>
+        {!isUser && (
+          <TabsContent value="validation" className="mt-4">
+            <PaperValidationPanel book={book} />
+          </TabsContent>
+        )}
 
-        <TabsContent value="daily-detail" className="mt-4">
-          <DailyDetailPanel book={book} />
-        </TabsContent>
+        {!isUser && (
+          <TabsContent value="daily-detail" className="mt-4">
+            <DailyDetailPanel book={book} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
