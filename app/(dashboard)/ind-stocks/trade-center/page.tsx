@@ -1100,7 +1100,7 @@ function DailyDetailPanel({ book }: { book: string }) {
   );
 }
 
-export default function TradeMonitorPage() {
+export default function TradeCenterPage() {
   const searchParams = useSearchParams();
   // A signed-up user (MU2) sees the trades, not the operator's paper validation or daily detail
   const isUser = useAuthStore((s) => s.user?.role === "user");
@@ -1122,7 +1122,7 @@ export default function TradeMonitorPage() {
       <RibbonVixBar symbols={NIFTY_50_TICKERS} market="IND" />
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Trade Monitor</h2>
+        <h2 className="text-lg font-semibold">Trade Center</h2>
         <div className="flex items-center gap-3">
           <Select value={book} onValueChange={setBook}>
             <SelectTrigger className="h-8 w-[200px] text-xs" aria-label="Paper book">

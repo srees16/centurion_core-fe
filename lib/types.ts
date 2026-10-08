@@ -1129,7 +1129,7 @@ export interface PortfolioRiskSnapshot {
   alerts: string[];
 }
 
-// ─── Trade Monitor (P1) ───────────────────────────────────────────────────
+// ─── Trade Center page (P1; data from the API's /screener/monitor) ─────────
 export interface MonitoredTradeDetail {
   symbol: string;
   side: string;
