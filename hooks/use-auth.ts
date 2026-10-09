@@ -21,7 +21,7 @@ interface AuthState {
 function storeToken(token: string) {
   localStorage.setItem("access_token", token);
   localStorage.setItem("refresh_token", token);
-  // Set cookie so Next.js middleware can read the token server-side
+  // Set cookie so the Next.js proxy (proxy.ts) can read the token server-side
   document.cookie = `access_token=${token}; path=/; max-age=${8 * 60 * 60}; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
 }
 
