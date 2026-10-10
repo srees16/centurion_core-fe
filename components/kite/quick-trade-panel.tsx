@@ -13,10 +13,11 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useKitePlaceOrder } from "@/hooks/use-kite";
-import { Zap, FileText, Shield, Clock } from "lucide-react";
+import { Zap, FileText, Clock } from "lucide-react";
 
 const EXCHANGES = ["NSE", "BSE"];
-const PRODUCTS = ["CNC", "MIS", "NRML"];
+// Swing and positional only: no MIS (intraday); the server refuses it too.
+const PRODUCTS = ["CNC", "NRML"];
 const ORDER_TYPES = ["LIMIT", "MARKET", "SL", "SL-M"];
 
 type KiteOrderPayload = {
@@ -71,15 +72,12 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
         </p>
       )}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid grid-cols-4 h-8">
+        <TabsList className="grid grid-cols-3 h-8">
           <TabsTrigger value="quick" className="text-xs gap-1">
             <Zap className="h-3 w-3" /> Quick
           </TabsTrigger>
           <TabsTrigger value="regular" className="text-xs gap-1">
             <FileText className="h-3 w-3" /> Regular
-          </TabsTrigger>
-          <TabsTrigger value="cover" className="text-xs gap-1">
-            <Shield className="h-3 w-3" /> Cover
           </TabsTrigger>
           <TabsTrigger value="amo" className="text-xs gap-1">
             <Clock className="h-3 w-3" /> AMO
@@ -98,15 +96,6 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
         {/* ── Regular ── */}
         <TabsContent value="regular" className="mt-3 space-y-2">
           <RegularTab
-            symbols={sorted}
-            onPlace={submit}
-            isPending={placeOrder.isPending}
-          />
-        </TabsContent>
-
-        {/* ── Cover Order ── */}
-        <TabsContent value="cover" className="mt-3 space-y-2">
-          <CoverTab
             symbols={sorted}
             onPlace={submit}
             isPending={placeOrder.isPending}
@@ -288,92 +277,6 @@ function RegularTab({ symbols, onPlace, isPending }: TabProps) {
         </div>
         <Button size="sm" className="flex-1" onClick={place} disabled={isPending}>
           Place {side} Order
-        </Button>
-      </div>
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Cover Order Tab — Intraday with built-in SL
-   ═══════════════════════════════════════════════════════════ */
-function CoverTab({ symbols, onPlace, isPending }: TabProps) {
-  const [sym, setSym] = useState(symbols[0] ?? "");
-  const [exchange, setExchange] = useState("NSE");
-  const [orderType, setOrderType] = useState("MARKET");
-  const [qty, setQty] = useState(1);
-  const [price, setPrice] = useState(0);
-  const [trigger, setTrigger] = useState(1);
-  const [side, setSide] = useState<"BUY" | "SELL">("BUY");
-
-  const place = () => {
-    const o: KiteOrderPayload = {
-      tradingsymbol: sym,
-      exchange,
-      transaction_type: side,
-      quantity: qty,
-      order_type: orderType as KiteOrderPayload["order_type"],
-      product: "MIS",
-      validity: "DAY",
-      variety: "co",
-      trigger_price: trigger,
-    };
-    if (orderType === "LIMIT" && price > 0) o.price = price;
-    onPlace(o);
-  };
-
-  return (
-    <>
-      <p className="text-xs text-muted-foreground">Intraday with built-in stop-loss (MIS only)</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <Label className="text-xs">Symbol</Label>
-          <Select value={sym} onValueChange={setSym}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>{symbols.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs">Exchange</Label>
-          <Select value={exchange} onValueChange={setExchange}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>{EXCHANGES.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs">Order Type</Label>
-          <Select value={orderType} onValueChange={setOrderType}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MARKET">MARKET</SelectItem>
-              <SelectItem value="LIMIT">LIMIT</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs">Qty</Label>
-          <Input type="number" className="h-8 text-xs" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value) || 1)} />
-        </div>
-        <div>
-          <Label className="text-xs">Price</Label>
-          <Input type="number" className="h-8 text-xs" min={0} step={0.05} value={price} onChange={(e) => setPrice(Number(e.target.value))} disabled={orderType === "MARKET"} />
-        </div>
-        <div>
-          <Label className="text-xs">SL Trigger *</Label>
-          <Input type="number" className="h-8 text-xs" min={0.05} step={0.05} value={trigger} onChange={(e) => setTrigger(Number(e.target.value) || 0.05)} />
-        </div>
-      </div>
-      <div className="flex gap-2 items-center">
-        <div className="flex gap-2">
-          <Button size="sm" variant={side === "BUY" ? "default" : "outline"} className={side === "BUY" ? "bg-green-600 hover:bg-green-700" : ""} onClick={() => setSide("BUY")}>
-            BUY
-          </Button>
-          <Button size="sm" variant={side === "SELL" ? "default" : "outline"} className={side === "SELL" ? "bg-red-600 hover:bg-red-700" : ""} onClick={() => setSide("SELL")}>
-            SELL
-          </Button>
-        </div>
-        <Button size="sm" className="flex-1" onClick={place} disabled={isPending}>
-          Place Cover {side}
         </Button>
       </div>
     </>
