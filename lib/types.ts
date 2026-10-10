@@ -1270,6 +1270,58 @@ export interface WeeklyCheckpointsResponse {
   count: number;
 }
 
+// ─── Metrics Journal (JR1) ───────────────────────────────────────────────
+export type JournalKind = "backtest" | "walk_forward";
+export type JournalMetric = "cagr" | "sharpe" | "max_dd" | "calmar" | "dsr";
+
+/** One piece of research evidence for a book (docs/metrics_journal.csv); fractions, not percent. */
+export interface JournalRow {
+  date: string;
+  book: string;
+  kind: JournalKind;
+  event: string;
+  cost_model: number | null;
+  data_hash: string | null;
+  config_hash: string | null;
+  ref: string;
+  cagr: number | null;
+  sharpe: number | null;
+  max_dd: number | null;
+  calmar: number | null;
+  sharpe_2017_25: number | null;
+  dsr: number | null;
+  pbo: number | null;
+  pbo_n: number | null;
+  exp_sharpe: number | null;
+  exp_cagr: number | null;
+  note: string | null;
+}
+
+/** The paper book at a week's last session; Sharpe only from 20 sessions. */
+export interface JournalPaperPoint {
+  date: string;
+  sessions: number;
+  total_return: number | null;
+  max_dd: number | null;
+  sharpe: number | null;
+}
+
+export interface JournalTarget {
+  label: string;
+  metric: JournalMetric;
+  kind: JournalKind | null;   // null: applies to every kind
+  op: string;
+  value: number;
+}
+
+export interface MetricsJournalResponse {
+  book: string;
+  rows: JournalRow[];
+  paper: JournalPaperPoint[];
+  paper_error: string | null;
+  targets: JournalTarget[];
+}
+
 // ─── Daily Detail Drill-down ─────────────────────────────────────────────
 export interface PaperSessionActivity {
   session_date: string;

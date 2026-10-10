@@ -10,6 +10,7 @@ import type {
   DailyDetailResponse,
   PaperSessionsResponse,
   PaperBooksResponse,
+  MetricsJournalResponse,
 } from "@/lib/types";
 
 /** Query params for a paper book other than the deployed one (G12). */
@@ -68,6 +69,15 @@ export function useWeeklyCheckpoints(book?: string) {
     queryKey: ["weekly-checkpoints", book],
     queryFn: () => api.get<WeeklyCheckpointsResponse>("/api/v1/screener/monitor/weekly-checkpoints", bookParams(book)),
     refetchInterval: 120_000,
+  });
+}
+
+/** JR1: research evidence (changes at re-baselines) and weekly paper points for a book. */
+export function useMetricsJournal(book?: string) {
+  return useQuery({
+    queryKey: ["metrics-journal", book],
+    queryFn: () => api.get<MetricsJournalResponse>("/api/v1/screener/monitor/journal", bookParams(book)),
+    staleTime: 10 * 60_000,
   });
 }
 

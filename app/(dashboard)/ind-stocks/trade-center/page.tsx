@@ -8,6 +8,8 @@ import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
 import { RibbonVixBar } from "@/components/common/ribbon-vix-bar";
 import { Spinner } from "@/components/common/spinner";
 import { EquityCurveChart } from "@/components/charts/equity-curve-chart";
+import { JOURNAL_CHART_METRICS, MetricsJournalChart, type JournalChartMetric } from "@/components/charts/metrics-journal-chart";
+import { Button } from "@/components/ui/button";
 import { NIFTY_50_TICKERS } from "@/lib/constants";
 import {
   useTradeMonitorSummary,
@@ -19,6 +21,7 @@ import {
   useWeeklyCheckpoints,
   useDailyDetail,
   usePaperSessions,
+  useMetricsJournal,
 } from "@/hooks/use-trade-monitor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatPct, formatNumber } from "@/lib/utils";
@@ -26,10 +29,11 @@ import {
   Activity, CheckCircle, XCircle, AlertTriangle,
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown,
   BarChart3, Target, Shield, Zap, Calendar, Search,
-  Play, Square, Clock, RefreshCw,
+  Play, Square, Clock, RefreshCw, BookOpen,
 } from "lucide-react";
 import type { MonitoredTradeDetail, SignalLogEntry, WeeklyCheckpoint,
-  PaperSessionActivity, PaperExecution, DailySnapshot, TradeMonitorDetail } from "@/lib/types";
+  PaperSessionActivity, PaperExecution, DailySnapshot, TradeMonitorDetail,
+  JournalKind, JournalMetric, JournalTarget } from "@/lib/types";
 import { usePaperTradingState, usePaperTradingToggle } from "@/hooks/use-paper-trading-state";
 import { SortableTh, timeValue, useSortableRows } from "@/components/tables/sortable";
 
@@ -887,6 +891,137 @@ function PaperValidationPanel({ book }: { book: string }) {
   );
 }
 
+/* ── Metrics journal (JR1) ─────────────────────────────────────────────── */
+
+const pctOrDash = (v: number | null | undefined, d = 1) => (v == null ? "—" : `${(v * 100).toFixed(d)}%`);
+const numOrDash = (v: number | null | undefined, d = 3) => (v == null ? "—" : v.toFixed(d));
+const PCT_METRICS: JournalMetric[] = ["cagr", "max_dd"];
+
+function MetricsJournalPanel({ book }: { book: string }) {
+  const journalQ = useMetricsJournal(book);
+  const [metric, setMetric] = useState<JournalChartMetric>("sharpe");
+
+  if (journalQ.isLoading) return <Spinner />;
+  if (!journalQ.data) {
+    return <p className="text-sm text-muted-foreground py-4 text-center">Metrics journal unavailable.</p>;
+  }
+  const { rows, paper, targets, paper_error } = journalQ.data;
+  const latest = (kind: JournalKind) => [...rows].reverse().find((r) => r.kind === kind);
+  const bt = latest("backtest");
+  const wf = latest("walk_forward");
+  const last = paper[paper.length - 1];
+
+  // Card label with its target, and green / red against it (no colour without a target or a value).
+  const goal = (m: JournalMetric, kind: JournalKind) =>
+    targets.find((t) => t.metric === m && (t.kind === null || t.kind === kind));
+  const goalText = (t?: JournalTarget) =>
+    t ? ` (${t.op} ${PCT_METRICS.includes(t.metric) ? `${t.value * 100}%` : t.value})` : "";
+  const goalColor = (t: JournalTarget | undefined, v: number | null | undefined) =>
+    !t || v == null ? undefined : (t.op === ">" ? v > t.value : v >= t.value) ? "text-green-500" : "text-red-500";
+  const card = (label: string, m: JournalMetric, kind: JournalKind, v: number | null | undefined, digits: number) => {
+    const t = goal(m, kind);
+    const value = PCT_METRICS.includes(m) ? pctOrDash(v, digits) : numOrDash(v, digits);
+    return <MetricCard label={`${label}${goalText(t)}`} value={value} color={goalColor(t, v)} />;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <Target className="h-4 w-4" /> Where it stands
+          {bt && (
+            <span className="text-xs font-normal text-muted-foreground">
+              backtest of {bt.date}: cost model {bt.cost_model ?? "—"}, data {bt.data_hash ?? "—"}
+            </span>
+          )}
+        </h3>
+        <MetricsGrid>
+          {card("Backtest CAGR", "cagr", "backtest", bt?.cagr, 2)}
+          {card("Backtest Sharpe", "sharpe", "backtest", bt?.sharpe, 3)}
+          {card("Max DD", "max_dd", "backtest", bt?.max_dd, 1)}
+          {card("Calmar", "calmar", "backtest", bt?.calmar, 2)}
+          {card("Deflated Sharpe", "dsr", "backtest", bt?.dsr, 3)}
+          {card("Walk-forward Sharpe", "sharpe", "walk_forward", wf?.sharpe, 3)}
+          <MetricCard label={bt?.pbo_n ? `PBO (${bt.pbo_n} configs)` : "PBO"} value={pctOrDash(bt?.pbo)} />
+          <MetricCard label="Expected live Sharpe" value={numOrDash(bt?.exp_sharpe, 2)} />
+          <MetricCard label="Expected live CAGR" value={pctOrDash(bt?.exp_cagr)} />
+          <MetricCard label={`Paper return (${last?.sessions ?? 0} sessions)`} value={pctOrDash(last?.total_return, 2)}
+            color={last?.total_return == null ? undefined : last.total_return >= 0 ? "pnl-positive" : "pnl-negative"} />
+        </MetricsGrid>
+      </div>
+
+      <div className="content-panel p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" /> How it moved
+          </h3>
+          <div className="flex gap-1">
+            {JOURNAL_CHART_METRICS.map((m) => (
+              <Button key={m.key} size="sm" variant={metric === m.key ? "default" : "outline"}
+                className="h-7 px-2 text-xs" onClick={() => setMetric(m.key)}>
+                {m.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <MetricsJournalChart rows={rows} paper={paper} targets={targets} metric={metric} />
+        <p className="text-xs text-muted-foreground mt-1">
+          A backtest or walk-forward value holds until the next re-baseline; paper is the book&apos;s record at each
+          week&apos;s last session (Sharpe from 20 sessions). Dashed red: the target.
+        </p>
+      </div>
+
+      <div className="content-panel p-4">
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <BookOpen className="h-4 w-4" /> Journal ({rows.length} entries)
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-2 pr-3 font-medium">Date</th>
+                <th className="py-2 pr-3 font-medium">Evidence</th>
+                <th className="py-2 pr-3 font-medium">Event</th>
+                <th className="py-2 pr-3 font-medium text-right">Cost model</th>
+                <th className="py-2 pr-3 font-medium">Data</th>
+                <th className="py-2 pr-3 font-medium text-right">CAGR</th>
+                <th className="py-2 pr-3 font-medium text-right">Sharpe</th>
+                <th className="py-2 pr-3 font-medium text-right">Max DD</th>
+                <th className="py-2 pr-3 font-medium text-right">Calmar</th>
+                <th className="py-2 pr-3 font-medium text-right">DSR</th>
+                <th className="py-2 pr-3 font-medium text-right">PBO</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...rows].reverse().map((r) => (
+                <tr key={`${r.kind}-${r.ref}`} className="border-b last:border-0 hover:bg-accent/50">
+                  <td className="py-2 pr-3 text-xs whitespace-nowrap">{r.date}</td>
+                  <td className="py-2 pr-3 text-xs whitespace-nowrap">{r.kind === "backtest" ? "Backtest" : "Walk-forward"}</td>
+                  <td className="py-2 pr-3 text-xs" title={r.note ?? undefined}>{r.event}</td>
+                  <td className="py-2 pr-3 text-right">{r.cost_model ?? "—"}</td>
+                  <td className="py-2 pr-3 text-xs font-mono">{r.data_hash ?? "—"}</td>
+                  <td className="py-2 pr-3 text-right">{pctOrDash(r.cagr, 2)}</td>
+                  <td className="py-2 pr-3 text-right">{numOrDash(r.sharpe)}</td>
+                  <td className="py-2 pr-3 text-right text-red-500">{pctOrDash(r.max_dd)}</td>
+                  <td className="py-2 pr-3 text-right">{numOrDash(r.calmar, 2)}</td>
+                  <td className="py-2 pr-3 text-right">{numOrDash(r.dsr)}</td>
+                  <td className="py-2 pr-3 text-right" title={r.note ?? undefined}>{pctOrDash(r.pbo)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Research evidence from docs/metrics_journal.csv in the repository: a row is added at each re-baseline
+          (nse_engine.books register) and committed with the change that moved it. Older PBOs are on raw returns;
+          hover a PBO for its basis.
+          {paper_error && <span className="text-amber-500"> Paper record unavailable: {paper_error}</span>}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Page ─────────────────────────────────────────────────────────── */
 
 function DailyDetailPanel({ book }: { book: string }) {
@@ -1104,7 +1239,8 @@ export default function TradeCenterPage() {
   const searchParams = useSearchParams();
   // A signed-up user (MU2) sees the trades, not the operator's paper validation or daily detail
   const isUser = useAuthStore((s) => s.user?.role === "user");
-  const initialTab = searchParams.get("tab") === "paper" && !isUser ? "validation" : "active";
+  const tabParam = searchParams.get("tab");
+  const initialTab = isUser ? "active" : tabParam === "paper" ? "validation" : tabParam === "journal" ? "journal" : "active";
   const [tab, setTab] = useState(initialTab);
   // G12: which paper book the page shows (deployed, candidate, e4, ...)
   const [book, setBook] = useState(searchParams.get("book") ?? "deployed");
@@ -1169,6 +1305,11 @@ export default function TradeCenterPage() {
               Daily Detail
             </TabsTrigger>
           )}
+          {!isUser && (
+            <TabsTrigger value="journal">
+              Journal
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
@@ -1198,6 +1339,12 @@ export default function TradeCenterPage() {
         {!isUser && (
           <TabsContent value="daily-detail" className="mt-4">
             <DailyDetailPanel book={book} />
+          </TabsContent>
+        )}
+
+        {!isUser && (
+          <TabsContent value="journal" className="mt-4">
+            <MetricsJournalPanel book={book} />
           </TabsContent>
         )}
       </Tabs>
