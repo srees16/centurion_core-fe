@@ -9,10 +9,11 @@ import { Spinner } from "@/components/common/spinner";
 import { EquityCurveChart } from "@/components/charts/equity-curve-chart";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { NASDAQ_50_TICKERS } from "@/lib/constants";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
-import type { EquityPoint, UsAdvisoryOrder } from "@/lib/types";
-import { AlertTriangle } from "lucide-react";
+import type { EquityPoint, UsAdvisoryDay, UsAdvisoryOrder } from "@/lib/types";
+import { AlertTriangle, Calendar } from "lucide-react";
 
 /** Your capital, remembered in this browser only (the email's is US_ADVISORY_CAPITAL_USD). */
 const CAPITAL_KEY = "us_advisory_capital";
@@ -109,6 +110,166 @@ function OrdersTable({ orders, k }: { orders: UsAdvisoryOrder[]; k: number }) {
   );
 }
 
+/* ── Daily Detail: the model book session by session, as the India Trade Center's ── */
+
+type DayKind = "traded" | "decided" | "held";
+
+const dayKind = (d: UsAdvisoryDay): DayKind =>
+  d.executed.some((e) => e.status === "FILLED") ? "traded" : d.suggested.length > 0 ? "decided" : "held";
+
+const DAY_STYLE: Record<DayKind, string> = {
+  traded: "bg-green-500/15 border-green-500/50 text-green-700 dark:text-green-400 hover:bg-green-500/25",
+  decided: "bg-amber-500/15 border-amber-500/50 text-amber-700 dark:text-amber-400 hover:bg-amber-500/25",
+  held: "bg-background hover:bg-accent border-border",
+};
+
+const DAY_TITLE: Record<DayKind, string> = {
+  traded: "Holdings changed: orders filled or a stop was hit",
+  decided: "Orders suggested after the close, for the next open",
+  held: "Held: no change to the model book",
+};
+
+function DailyDetail({ days, k }: { days: UsAdvisoryDay[]; k: number }) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const day = days.find((d) => d.date === picked) ?? days[0];
+  if (!day) {
+    return <div className="content-panel p-4 text-sm text-muted-foreground">No sessions recorded yet.</div>;
+  }
+  const filled = day.executed.filter((e) => e.status === "FILLED").length;
+
+  return (
+    <div className="space-y-4">
+      <div className="content-panel p-4">
+        <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <Calendar className="h-4 w-4" /> Select session
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {days.map((d) => (
+            <button
+              key={d.date}
+              onClick={() => setPicked(d.date)}
+              title={DAY_TITLE[dayKind(d)]}
+              className={cn("px-3 py-1.5 text-xs font-mono rounded-md border transition-colors",
+                d.date === day.date ? "bg-primary text-primary-foreground border-primary" : DAY_STYLE[dayKind(d)])}
+            >
+              {d.date}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-green-500/50 bg-green-500/15" /> holdings changed
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-amber-500/50 bg-amber-500/15" /> orders suggested, fill next open
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-border bg-background" /> held
+          </span>
+        </div>
+      </div>
+
+      <MetricsGrid>
+        <MetricCard label="Model book, your capital" value={formatCurrency(day.equity * k)} />
+        <MetricCard label="Day P&L" value={formatCurrency(day.day_pnl * k)}
+          color={day.day_pnl >= 0 ? "pnl-positive" : "pnl-negative"} />
+        <MetricCard label="Since start" value={pct(day.return, true, 2)}
+          color={day.return >= 0 ? "pnl-positive" : "pnl-negative"} />
+        <MetricCard label="Names held" value={String(day.names)} />
+        <MetricCard label="Filled" value={String(filled)} />
+        <MetricCard label="Suggested" value={String(day.suggested.length)} />
+      </MetricsGrid>
+
+      <div className="content-panel p-4">
+        <h4 className="text-sm font-semibold mb-2">Executed on {sessionDate(day.date)} ({day.executed.length})</h4>
+        {day.executed.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing executed: no order filled and no stop was hit.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-muted-foreground text-left">
+                  <th className="py-2 pr-3"></th>
+                  <th className="py-2 pr-3">Symbol</th>
+                  <th className="py-2 pr-3 text-right">Your shares</th>
+                  <th className="py-2 pr-3 text-right">Price</th>
+                  <th className="py-2 pr-3 text-right">Return</th>
+                  <th className="py-2">What</th>
+                </tr>
+              </thead>
+              <tbody>
+                {day.executed.map((e, i) => (
+                  <tr key={`${e.side}-${e.symbol}-${i}`} className="border-b">
+                    <td className="py-2 pr-3"><SidePill side={e.side} /></td>
+                    <td className="py-2 pr-3 font-mono font-medium">{e.symbol}</td>
+                    <td className="py-2 pr-3 text-right">
+                      {e.status === "FILLED" ? formatNumber(e.qty * k, 4) : <span className="text-muted-foreground">not filled</span>}
+                    </td>
+                    <td className="py-2 pr-3 text-right">{e.status === "FILLED" ? formatNumber(e.price) : "—"}</td>
+                    <td className={cn("py-2 pr-3 text-right", e.pnl == null ? "" : e.pnl >= 0 ? "pnl-positive" : "pnl-negative")}>
+                      {e.pnl == null ? "—" : pct(e.pnl, true)}
+                    </td>
+                    <td className="py-2 text-xs">
+                      {e.stop_hit ? "stop hit" : e.status === "CANCELLED" ? e.note : e.reason}
+                      {e.side === "SELL" && e.closed && !e.stop_hit ? " · position closed" : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="content-panel p-4">
+        <h4 className="text-sm font-semibold mb-2">
+          Suggested after the {sessionDate(day.date)} close ({day.suggested.length})
+        </h4>
+        {day.suggested.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No orders suggested: hold, and keep the stops in place.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-muted-foreground text-left">
+                  <th className="py-2 pr-3"></th>
+                  <th className="py-2 pr-3">Symbol</th>
+                  <th className="py-2 pr-3 text-right">Your shares</th>
+                  <th className="py-2 pr-3 text-right">Your $</th>
+                  <th className="py-2 pr-3 text-right">Last close</th>
+                  <th className="py-2 pr-3 text-right">Stop</th>
+                  <th className="py-2 pr-3">Outcome</th>
+                  <th className="py-2">Why</th>
+                </tr>
+              </thead>
+              <tbody>
+                {day.suggested.map((s, i) => (
+                  <tr key={`${s.side}-${s.symbol}-${i}`} className="border-b">
+                    <td className="py-2 pr-3"><SidePill side={s.side} /></td>
+                    <td className="py-2 pr-3 font-mono font-medium">{s.symbol}</td>
+                    <td className="py-2 pr-3 text-right">{s.side === "SELL" && s.closed ? "all" : formatNumber(s.qty * k, 4)}</td>
+                    <td className="py-2 pr-3 text-right">{formatCurrency(s.qty * s.price * k)}</td>
+                    <td className="py-2 pr-3 text-right">{formatNumber(s.price)}</td>
+                    <td className="py-2 pr-3 text-right">{s.stop ? formatNumber(s.stop) : "—"}</td>
+                    <td className="py-2 pr-3 text-xs">
+                      {s.status === "PENDING" ? <span className="text-amber-600">next open</span>
+                        : s.status === "FILLED"
+                          ? `filled ${sessionDate(s.filled_on ?? undefined)} at ${formatNumber(s.fill_price ?? 0)}${
+                              s.filled_qty != null && s.filled_qty < s.qty ? ` (${formatNumber(s.filled_qty * k, 4)} of them)` : ""}`
+                          : <span className="text-muted-foreground">not filled: {s.note}</span>}
+                    </td>
+                    <td className="py-2 text-xs">{s.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function USAdvisoryPage() {
   const isUser = useAuthStore((s) => s.user?.role === "user");
   const q = useUsAdvisory(!isUser);
@@ -154,7 +315,7 @@ export default function USAdvisoryPage() {
   const facts = data?.facts ?? {};
   const orders = data?.orders ?? [];
   const holdings = data?.holdings ?? [];
-  const trades = data?.trades ?? [];
+  const days = data?.days ?? [];
   const sells = orders.filter((o) => o.side === "SELL").length;
 
   return (
@@ -210,149 +371,122 @@ export default function USAdvisoryPage() {
           )}
 
           {data?.ready && (
-            <>
-              <div>
-                <h3 className="text-base font-semibold">Suggestions for the {openIst(data.next_open_ist)} open</h3>
-                <p className="text-xs text-muted-foreground">
-                  Decided after the {sessionDate(data.as_of)} US close
-                  {data.emailed ? " · emailed" : ""} · model book since {sessionDate(data.start)}
-                </p>
-              </div>
+            <Tabs defaultValue="overview">
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="daily">Daily Detail</TabsTrigger>
+              </TabsList>
 
-              <MetricsGrid>
-                <MetricCard label="Model book" value={pct(data.return, true, 2)}
-                  color={(data.return ?? 0) >= 0 ? "text-green-500" : "text-red-500"} />
-                {facts.spx_return != null && <MetricCard label="S&P 500, same period" value={pct(facts.spx_return, true, 2)} />}
-                <MetricCard label="Max drawdown" value={pct(data.max_drawdown)} />
-                <MetricCard label="Invested" value={pct(data.equity ? 1 - (data.cash ?? 0) / data.equity : 0, false, 0)} />
-                <MetricCard label="Holdings" value={String(holdings.length)} />
-                {facts.regime && (
-                  <MetricCard label="Market regime" value={`${facts.regime.replace(/_/g, " ")}`}
-                    color={facts.regime === "risk_off" ? "text-red-500" : facts.regime === "risk_on" ? "text-green-500" : undefined} />
-                )}
-                {facts.dd_state && facts.dd_state !== "normal" && (
-                  <MetricCard label="Drawdown rule" value={`${facts.dd_state} (${pct(facts.dd)})`} color="text-red-500" />
-                )}
-              </MetricsGrid>
-              {facts.spx != null && (
-                <p className="text-xs text-muted-foreground -mt-2">
-                  S&amp;P 500 {formatNumber(facts.spx, 0)}, {pct(facts.spx_vs_ma200, true)} vs its 200-day average
-                  {facts.vix != null && ` · VIX ${formatNumber(facts.vix, 1)}`}
-                  {facts.scale != null && ` · position scale ${formatNumber(facts.scale, 1)}`}
-                </p>
-              )}
-
-              <div className="content-panel p-4">
-                <h4 className="text-sm font-semibold mb-2">
-                  Next open: {orders.length - sells} buy{orders.length - sells === 1 ? "" : "s"}, {sells} sell{sells === 1 ? "" : "s"}
-                </h4>
-                {orders.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No orders: hold, and keep the stops in place.</p>
-                ) : (
-                  <OrdersTable orders={orders} k={k} />
-                )}
-              </div>
-
-              {(facts.raised?.length ?? 0) > 0 && (
-                <div className="content-panel p-4">
-                  <h4 className="text-sm font-semibold mb-2">Raise these stops</h4>
-                  <div className="flex flex-wrap gap-2 text-sm">
-                    {facts.raised!.map(([sym, old, now]) => (
-                      <span key={sym} className="rounded border px-2 py-1">
-                        <span className="font-mono font-medium">{sym}</span>{" "}
-                        <span className="text-muted-foreground">{old != null ? formatNumber(old) : "—"} →</span>{" "}
-                        <span className="font-semibold">{formatNumber(now)}</span>
-                      </span>
-                    ))}
-                  </div>
+              <TabsContent value="overview" className="mt-4 space-y-4">
+                <div>
+                  <h3 className="text-base font-semibold">Suggestions for the {openIst(data.next_open_ist)} open</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Decided after the {sessionDate(data.as_of)} US close
+                    {data.emailed ? " · emailed" : ""} · model book since {sessionDate(data.start)}
+                  </p>
                 </div>
-              )}
 
-              <div className="content-panel p-4">
-                <h4 className="text-sm font-semibold mb-2">Holdings ({holdings.length})</h4>
-                {holdings.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">None yet: the first buys fill at the next open.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b text-muted-foreground text-left">
-                          <th className="py-2 pr-3">Symbol</th>
-                          <th className="py-2 pr-3 text-right">Weight</th>
-                          <th className="py-2 pr-3 text-right">Your shares</th>
-                          <th className="py-2 pr-3 text-right">Your $</th>
-                          <th className="py-2 pr-3">Since</th>
-                          <th className="py-2 pr-3 text-right">Entry → last</th>
-                          <th className="py-2 pr-3 text-right">P&amp;L</th>
-                          <th className="py-2 text-right">Stop</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {holdings.map((h) => (
-                          <tr key={h.symbol} className="border-b">
-                            <td className="py-2 pr-3 font-mono font-medium">{h.symbol}</td>
-                            <td className="py-2 pr-3 text-right">{pct(h.weight)}</td>
-                            <td className="py-2 pr-3 text-right">{formatNumber(h.qty * k, 4)}</td>
-                            <td className="py-2 pr-3 text-right">{formatCurrency(h.qty * h.last * k)}</td>
-                            <td className="py-2 pr-3 text-xs">{sessionDate(h.since)}</td>
-                            <td className="py-2 pr-3 text-right">{formatNumber(h.entry)} → {formatNumber(h.last)}</td>
-                            <td className={cn("py-2 pr-3 text-right", h.pnl >= 0 ? "pnl-positive" : "pnl-negative")}>
-                              {pct(h.pnl, true)}
-                            </td>
-                            <td className="py-2 text-right">{h.stop ? formatNumber(h.stop) : "—"}</td>
+                <MetricsGrid>
+                  <MetricCard label="Model book" value={pct(data.return, true, 2)}
+                    color={(data.return ?? 0) >= 0 ? "text-green-500" : "text-red-500"} />
+                  {facts.spx_return != null && <MetricCard label="S&P 500, same period" value={pct(facts.spx_return, true, 2)} />}
+                  <MetricCard label="Max drawdown" value={pct(data.max_drawdown)} />
+                  <MetricCard label="Invested" value={pct(data.equity ? 1 - (data.cash ?? 0) / data.equity : 0, false, 0)} />
+                  <MetricCard label="Holdings" value={String(holdings.length)} />
+                  {facts.regime && (
+                    <MetricCard label="Market regime" value={`${facts.regime.replace(/_/g, " ")}`}
+                      color={facts.regime === "risk_off" ? "text-red-500" : facts.regime === "risk_on" ? "text-green-500" : undefined} />
+                  )}
+                  {facts.dd_state && facts.dd_state !== "normal" && (
+                    <MetricCard label="Drawdown rule" value={`${facts.dd_state} (${pct(facts.dd)})`} color="text-red-500" />
+                  )}
+                </MetricsGrid>
+                {facts.spx != null && (
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    S&amp;P 500 {formatNumber(facts.spx, 0)}, {pct(facts.spx_vs_ma200, true)} vs its 200-day average
+                    {facts.vix != null && ` · VIX ${formatNumber(facts.vix, 1)}`}
+                    {facts.scale != null && ` · position scale ${formatNumber(facts.scale, 1)}`}
+                  </p>
+                )}
+
+                <div className="content-panel p-4">
+                  <h4 className="text-sm font-semibold mb-2">
+                    Next open: {orders.length - sells} buy{orders.length - sells === 1 ? "" : "s"}, {sells} sell{sells === 1 ? "" : "s"}
+                  </h4>
+                  {orders.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No orders: hold, and keep the stops in place.</p>
+                  ) : (
+                    <OrdersTable orders={orders} k={k} />
+                  )}
+                </div>
+
+                {(facts.raised?.length ?? 0) > 0 && (
+                  <div className="content-panel p-4">
+                    <h4 className="text-sm font-semibold mb-2">Raise these stops</h4>
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      {facts.raised!.map(([sym, old, now]) => (
+                        <span key={sym} className="rounded border px-2 py-1">
+                          <span className="font-mono font-medium">{sym}</span>{" "}
+                          <span className="text-muted-foreground">{old != null ? formatNumber(old) : "—"} →</span>{" "}
+                          <span className="font-semibold">{formatNumber(now)}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="content-panel p-4">
+                  <h4 className="text-sm font-semibold mb-2">Holdings ({holdings.length})</h4>
+                  {holdings.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">None yet: the first buys fill at the next open.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-muted-foreground text-left">
+                            <th className="py-2 pr-3">Symbol</th>
+                            <th className="py-2 pr-3 text-right">Weight</th>
+                            <th className="py-2 pr-3 text-right">Your shares</th>
+                            <th className="py-2 pr-3 text-right">Your $</th>
+                            <th className="py-2 pr-3">Since</th>
+                            <th className="py-2 pr-3 text-right">Entry → last</th>
+                            <th className="py-2 pr-3 text-right">P&amp;L</th>
+                            <th className="py-2 text-right">Stop</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {holdings.map((h) => (
+                            <tr key={h.symbol} className="border-b">
+                              <td className="py-2 pr-3 font-mono font-medium">{h.symbol}</td>
+                              <td className="py-2 pr-3 text-right">{pct(h.weight)}</td>
+                              <td className="py-2 pr-3 text-right">{formatNumber(h.qty * k, 4)}</td>
+                              <td className="py-2 pr-3 text-right">{formatCurrency(h.qty * h.last * k)}</td>
+                              <td className="py-2 pr-3 text-xs">{sessionDate(h.since)}</td>
+                              <td className="py-2 pr-3 text-right">{formatNumber(h.entry)} → {formatNumber(h.last)}</td>
+                              <td className={cn("py-2 pr-3 text-right", h.pnl >= 0 ? "pnl-positive" : "pnl-negative")}>
+                                {pct(h.pnl, true)}
+                              </td>
+                              <td className="py-2 text-right">{h.stop ? formatNumber(h.stop) : "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {curve.length > 1 && (
+                  <div className="content-panel p-4">
+                    <h4 className="text-sm font-semibold mb-2">Model book, scaled to your capital</h4>
+                    <EquityCurveChart data={curve} height={280} />
                   </div>
                 )}
-              </div>
+              </TabsContent>
 
-              {curve.length > 1 && (
-                <div className="content-panel p-4">
-                  <h4 className="text-sm font-semibold mb-2">Model book, scaled to your capital</h4>
-                  <EquityCurveChart data={curve} height={280} />
-                </div>
-              )}
-
-              {trades.length > 0 && (
-                <div className="content-panel p-4">
-                  <h4 className="text-sm font-semibold mb-2">Model trades (latest {trades.length})</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b text-muted-foreground text-left">
-                          <th className="py-2 pr-3">Date</th>
-                          <th className="py-2 pr-3"></th>
-                          <th className="py-2 pr-3">Symbol</th>
-                          <th className="py-2 pr-3 text-right">Your shares</th>
-                          <th className="py-2 pr-3 text-right">Price</th>
-                          <th className="py-2 pr-3 text-right">Return</th>
-                          <th className="py-2">Why</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {trades.map((t, i) => (
-                          <tr key={`${t.date}-${t.side}-${t.symbol}-${i}`} className="border-b">
-                            <td className="py-2 pr-3 text-xs">{sessionDate(t.date)}</td>
-                            <td className="py-2 pr-3"><SidePill side={t.side} /></td>
-                            <td className="py-2 pr-3 font-mono font-medium">{t.symbol}</td>
-                            <td className="py-2 pr-3 text-right">
-                              {t.status === "FILLED" ? formatNumber(t.qty * k, 4) : <span className="text-muted-foreground">not filled</span>}
-                            </td>
-                            <td className="py-2 pr-3 text-right">{t.status === "FILLED" ? formatNumber(t.price) : "—"}</td>
-                            <td className={cn("py-2 pr-3 text-right", t.pnl == null ? "" : t.pnl >= 0 ? "pnl-positive" : "pnl-negative")}>
-                              {t.pnl == null ? "—" : pct(t.pnl, true)}
-                            </td>
-                            <td className="py-2 text-xs">{t.note || t.reason}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
+              <TabsContent value="daily" className="mt-4">
+                <DailyDetail days={days} k={k} />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </div>
