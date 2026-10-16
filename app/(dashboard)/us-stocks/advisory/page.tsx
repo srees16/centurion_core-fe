@@ -317,6 +317,7 @@ export default function USAdvisoryPage() {
   const holdings = data?.holdings ?? [];
   const days = data?.days ?? [];
   const sells = orders.filter((o) => o.side === "SELL").length;
+  const paused = Boolean(data?.paused?.since);
 
   return (
     <div className="space-y-6">
@@ -409,16 +410,27 @@ export default function USAdvisoryPage() {
                   </p>
                 )}
 
-                <div className="content-panel p-4">
-                  <h4 className="text-sm font-semibold mb-2">
-                    Next open: {orders.length - sells} buy{orders.length - sells === 1 ? "" : "s"}, {sells} sell{sells === 1 ? "" : "s"}
-                  </h4>
-                  {orders.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No orders: hold, and keep the stops in place.</p>
-                  ) : (
-                    <OrdersTable orders={orders} k={k} />
-                  )}
-                </div>
+                {paused ? (
+                  <div className="flex gap-2 rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+                    <p>
+                      <span className="font-semibold">Suggestions paused since {sessionDate(data.paused?.since)} (safety
+                      rule US-Y8).</span> {data.paused?.reason}. Keep your stops in place; holding or exiting is your
+                      call until the US6 verdict. The model book keeps running as the forward test.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="content-panel p-4">
+                    <h4 className="text-sm font-semibold mb-2">
+                      Next open: {orders.length - sells} buy{orders.length - sells === 1 ? "" : "s"}, {sells} sell{sells === 1 ? "" : "s"}
+                    </h4>
+                    {orders.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No orders: hold, and keep the stops in place.</p>
+                    ) : (
+                      <OrdersTable orders={orders} k={k} />
+                    )}
+                  </div>
+                )}
 
                 {(facts.raised?.length ?? 0) > 0 && (
                   <div className="content-panel p-4">
