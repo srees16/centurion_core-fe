@@ -514,6 +514,77 @@ export interface DWPosition {
   unrealized_pnl_pct: number;
 }
 
+// ─── US Advisory (US-UI1; data from the API's /us-advisory) ──────────────
+// The model book's quantities are whole shares at `notional` dollars; the page
+// scales them to your capital in dollars and fractional shares.
+
+export interface UsAdvisoryOrder {
+  symbol: string;
+  side: "BUY" | "SELL";
+  qty: number;
+  price: number;                 // last close
+  stop: number | null;           // a new name's first stop
+  all: boolean;                  // a SELL of the whole position
+  weight: number;                // the name's share of the book after the order (0-1)
+  reason: string;
+}
+
+export interface UsAdvisoryHolding {
+  symbol: string;
+  qty: number;
+  entry: number;
+  last: number;
+  since: string;
+  stop: number | null;
+  weight: number;
+  pnl: number;                   // fraction
+}
+
+export interface UsAdvisoryTrade {
+  date: string;
+  symbol: string;
+  side: "BUY" | "SELL";
+  qty: number;
+  price: number;
+  status: string;                // FILLED | CANCELLED
+  reason: string;
+  pnl: number | null;            // a sell's return on its entry price (fraction)
+  note: string;
+}
+
+export interface UsAdvisoryFacts {
+  regime?: string;
+  scale?: number;
+  spx?: number;
+  spx_vs_ma200?: number;
+  vix?: number;
+  spx_return?: number;
+  dd_state?: string;
+  dd?: number;
+  raised?: [string, number | null, number][];   // [symbol, old stop, new stop]
+}
+
+export interface UsAdvisoryResponse {
+  ready: boolean;
+  status: "unvalidated";
+  notional: number;
+  capital: number;
+  capital_set: boolean;
+  start?: string;
+  as_of?: string;
+  next_open_ist?: string;
+  emailed?: boolean;
+  equity?: number;
+  cash?: number;
+  return?: number;
+  max_drawdown?: number;
+  facts?: UsAdvisoryFacts;
+  orders?: UsAdvisoryOrder[];
+  holdings?: UsAdvisoryHolding[];
+  equity_curve?: { date: string; equity: number }[];
+  trades?: UsAdvisoryTrade[];
+}
+
 // ─── Options ──────────────────────────────────────────────────────────────
 export interface IndexQuote {
   index: string;
@@ -1271,10 +1342,11 @@ export interface WeeklyCheckpointsResponse {
 }
 
 // ─── Metrics Journal (JR1) ───────────────────────────────────────────────
-export type JournalKind = "backtest" | "walk_forward";
+/** "experiment": a concluded experiment that changed no book (book "all"), with its verdict. */
+export type JournalKind = "backtest" | "walk_forward" | "experiment";
 export type JournalMetric = "cagr" | "sharpe" | "max_dd" | "calmar" | "dsr";
 
-/** One piece of research evidence for a book (docs/metrics_journal.csv); fractions, not percent. */
+/** One piece of research evidence for a book, or an experiment (docs/metrics_journal.csv); fractions, not percent. */
 export interface JournalRow {
   date: string;
   book: string;
@@ -1295,6 +1367,7 @@ export interface JournalRow {
   exp_sharpe: number | null;
   exp_cagr: number | null;
   note: string | null;
+  verdict: string | null;        // experiments: FAIL, CLOSED or NO-GO
 }
 
 /** The paper book at a week's last session; Sharpe only from 20 sessions. */

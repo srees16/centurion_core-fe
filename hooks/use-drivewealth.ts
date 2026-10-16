@@ -39,19 +39,7 @@ export function useDriveWealth() {
     enabled: false,
   });
 
-  const orderMutation = useMutation({
-    mutationFn: (order: {
-      symbol: string;
-      side: "buy" | "sell";
-      order_type: "market" | "limit";
-      quantity: number;
-      limit_price?: number;
-    }) => api.post<{ order_id: string; status: string }>("/api/v1/drivewealth/orders", order),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["dw-positions"] });
-      qc.invalidateQueries({ queryKey: ["dw-account"] });
-    },
-  });
+  // No order mutation: US stocks are advisory only and the API refuses DriveWealth orders (tracker US1).
 
   return {
     login: loginMutation.mutate,
@@ -62,9 +50,6 @@ export function useDriveWealth() {
     fetchAccount: accountQuery.refetch,
     positions: positionsQuery.data ?? [],
     fetchPositions: positionsQuery.refetch,
-    placeOrder: orderMutation.mutate,
-    isOrdering: orderMutation.isPending,
-    orderError: orderMutation.error?.message ?? null,
     logout: () => {
       localStorage.removeItem(DW_TOKEN_KEY);
       localStorage.removeItem(DW_TOKEN_TS_KEY);

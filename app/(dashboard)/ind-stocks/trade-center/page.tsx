@@ -897,16 +897,26 @@ const pctOrDash = (v: number | null | undefined, d = 1) => (v == null ? "—" : 
 const numOrDash = (v: number | null | undefined, d = 3) => (v == null ? "—" : v.toFixed(d));
 const PCT_METRICS: JournalMetric[] = ["cagr", "max_dd"];
 
+const JOURNAL_FILTERS = [
+  { key: "all", label: "All" },
+  { key: "evidence", label: "Evidence" },
+  { key: "experiment", label: "Experiments" },
+] as const;
+
 function MetricsJournalPanel({ book }: { book: string }) {
   const journalQ = useMetricsJournal(book);
   const [metric, setMetric] = useState<JournalChartMetric>("sharpe");
+  const [listed, setListed] = useState<(typeof JOURNAL_FILTERS)[number]["key"]>("all");
 
   if (journalQ.isLoading) return <Spinner />;
   if (!journalQ.data) {
     return <p className="text-sm text-muted-foreground py-4 text-center">Metrics journal unavailable.</p>;
   }
   const { rows, paper, targets, paper_error } = journalQ.data;
-  const latest = (kind: JournalKind) => [...rows].reverse().find((r) => r.kind === kind);
+  const evidence = rows.filter((r) => r.kind !== "experiment");      // the book's own backtests and walk-forwards
+  const experiments = rows.filter((r) => r.kind === "experiment");   // concluded, changed no book
+  const shown = listed === "evidence" ? evidence : listed === "experiment" ? experiments : rows;
+  const latest = (kind: JournalKind) => [...evidence].reverse().find((r) => r.kind === kind);
   const bt = latest("backtest");
   const wf = latest("walk_forward");
   const last = paper[paper.length - 1];
@@ -964,7 +974,7 @@ function MetricsJournalPanel({ book }: { book: string }) {
             ))}
           </div>
         </div>
-        <MetricsJournalChart rows={rows} paper={paper} targets={targets} metric={metric} />
+        <MetricsJournalChart rows={evidence} paper={paper} targets={targets} metric={metric} />
         <p className="text-xs text-muted-foreground mt-1">
           A backtest or walk-forward value holds until the next re-baseline; paper is the book&apos;s record at each
           week&apos;s last session (Sharpe from 20 sessions). Dashed red: the target.
@@ -972,9 +982,19 @@ function MetricsJournalPanel({ book }: { book: string }) {
       </div>
 
       <div className="content-panel p-4">
-        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <BookOpen className="h-4 w-4" /> Journal ({rows.length} entries)
-        </h3>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <BookOpen className="h-4 w-4" /> Journal ({evidence.length} evidence, {experiments.length} experiments)
+          </h3>
+          <div className="flex gap-1">
+            {JOURNAL_FILTERS.map((f) => (
+              <Button key={f.key} size="sm" variant={listed === f.key ? "default" : "outline"}
+                className="h-7 px-2 text-xs" onClick={() => setListed(f.key)}>
+                {f.label}
+              </Button>
+            ))}
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -993,11 +1013,24 @@ function MetricsJournalPanel({ book }: { book: string }) {
               </tr>
             </thead>
             <tbody>
-              {[...rows].reverse().map((r) => (
+              {[...shown].reverse().map((r) => (
                 <tr key={`${r.kind}-${r.ref}`} className="border-b last:border-0 hover:bg-accent/50">
                   <td className="py-2 pr-3 text-xs whitespace-nowrap">{r.date}</td>
-                  <td className="py-2 pr-3 text-xs whitespace-nowrap">{r.kind === "backtest" ? "Backtest" : "Walk-forward"}</td>
-                  <td className="py-2 pr-3 text-xs" title={r.note ?? undefined}>{r.event}</td>
+                  <td className="py-2 pr-3 text-xs whitespace-nowrap">
+                    {r.kind === "backtest" ? "Backtest" : r.kind === "walk_forward" ? "Walk-forward" : "Experiment"}
+                  </td>
+                  {r.kind === "experiment" ? (
+                    <td className="py-2 pr-3 text-xs">
+                      <span className={`mr-1.5 inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                        r.verdict === "FAIL" ? "bg-red-500/10 text-red-500" : "bg-amber-500/10 text-amber-600"}`}>
+                        {r.verdict ?? "—"}
+                      </span>
+                      <span className="font-mono text-muted-foreground mr-1">{r.ref}</span>{r.event}
+                      {r.note && <p className="mt-0.5 text-muted-foreground">{r.note}</p>}
+                    </td>
+                  ) : (
+                    <td className="py-2 pr-3 text-xs" title={r.note ?? undefined}>{r.event}</td>
+                  )}
                   <td className="py-2 pr-3 text-right">{r.cost_model ?? "—"}</td>
                   <td className="py-2 pr-3 text-xs font-mono">{r.data_hash ?? "—"}</td>
                   <td className="py-2 pr-3 text-right">{pctOrDash(r.cagr, 2)}</td>
@@ -1005,7 +1038,9 @@ function MetricsJournalPanel({ book }: { book: string }) {
                   <td className="py-2 pr-3 text-right text-red-500">{pctOrDash(r.max_dd)}</td>
                   <td className="py-2 pr-3 text-right">{numOrDash(r.calmar, 2)}</td>
                   <td className="py-2 pr-3 text-right">{numOrDash(r.dsr)}</td>
-                  <td className="py-2 pr-3 text-right" title={r.note ?? undefined}>{pctOrDash(r.pbo)}</td>
+                  <td className="py-2 pr-3 text-right" title={r.kind === "experiment" ? undefined : r.note ?? undefined}>
+                    {pctOrDash(r.pbo)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1014,7 +1049,8 @@ function MetricsJournalPanel({ book }: { book: string }) {
         <p className="text-xs text-muted-foreground mt-2">
           Research evidence from docs/metrics_journal.csv in the repository: a row is added at each re-baseline
           (nse_engine.books register) and committed with the change that moved it. Older PBOs are on raw returns;
-          hover a PBO for its basis.
+          hover a PBO for its basis. Experiments, listed under every book, are concluded research that changed no
+          book, with their verdict; their numbers are the whole book&apos;s 2013-25 backtest when the test gave one.
           {paper_error && <span className="text-amber-500"> Paper record unavailable: {paper_error}</span>}
         </p>
       </div>

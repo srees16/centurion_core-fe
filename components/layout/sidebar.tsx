@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { APP_MODULES, US_SUB_PAGES, IND_SUB_PAGES } from "@/lib/constants";
+import { APP_MODULES, US_SUB_PAGES, IND_SUB_PAGES, type SubPage } from "@/lib/constants";
+import { useAuthStore } from "@/hooks/use-auth";
 import {
   BarChart3, Globe, Brain, FlaskConical, Bitcoin, MessageSquare,
   ChevronDown, ChevronRight, Menu, X, Bot, ShieldCheck, Activity, TrendingUp,
@@ -57,7 +58,9 @@ export function Sidebar() {
     else if (pathname.startsWith("/us-stocks")) setStockTab("us-stocks");
   }, [pathname]);
 
-  const stockSubPages = stockTab === "ind-stocks" ? IND_SUB_PAGES : US_SUB_PAGES;
+  const isUser = useAuthStore((s) => s.user?.role === "user");
+  const stockPages: SubPage[] = stockTab === "ind-stocks" ? IND_SUB_PAGES : US_SUB_PAGES;
+  const stockSubPages = stockPages.filter((sp) => !(isUser && sp.operatorOnly));
   const otherModules = APP_MODULES.filter((m) => !STOCK_KEYS.has(m.key));
 
   // Sync collapsed state to a CSS custom property so layout can react
