@@ -600,6 +600,7 @@ export interface UsAdvisoryResponse {
   return?: number;
   max_drawdown?: number;
   facts?: UsAdvisoryFacts;
+  paused?: { since?: string; reason?: string };   // the safety rule (US-Y8): no suggestions while set
   orders?: UsAdvisoryOrder[];
   holdings?: UsAdvisoryHolding[];
   equity_curve?: { date: string; equity: number }[];
