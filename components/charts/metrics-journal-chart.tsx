@@ -51,6 +51,7 @@ export function MetricsJournalChart({ rows, paper, targets, metric, height = 300
   const points: Point[] = [];
   const sameDay: Record<string, number> = {};
   for (const r of rows) {
+    if (r.kind !== "backtest" && r.kind !== "walk_forward") continue;   // experiments are not the book's evidence
     const v = scale(r[metric]);
     if (v === undefined) continue;
     // Rows of one day (e.g. two re-baselines) sit a few hours apart, in journal order.

@@ -1342,10 +1342,11 @@ export interface WeeklyCheckpointsResponse {
 }
 
 // ─── Metrics Journal (JR1) ───────────────────────────────────────────────
-export type JournalKind = "backtest" | "walk_forward";
+/** "experiment": a concluded experiment that changed no book (book "all"), with its verdict. */
+export type JournalKind = "backtest" | "walk_forward" | "experiment";
 export type JournalMetric = "cagr" | "sharpe" | "max_dd" | "calmar" | "dsr";
 
-/** One piece of research evidence for a book (docs/metrics_journal.csv); fractions, not percent. */
+/** One piece of research evidence for a book, or an experiment (docs/metrics_journal.csv); fractions, not percent. */
 export interface JournalRow {
   date: string;
   book: string;
@@ -1366,6 +1367,7 @@ export interface JournalRow {
   exp_sharpe: number | null;
   exp_cagr: number | null;
   note: string | null;
+  verdict: string | null;        // experiments: FAIL, CLOSED or NO-GO
 }
 
 /** The paper book at a week's last session; Sharpe only from 20 sessions. */
