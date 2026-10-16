@@ -540,16 +540,37 @@ export interface UsAdvisoryHolding {
   pnl: number;                   // fraction
 }
 
-export interface UsAdvisoryTrade {
-  date: string;
+/** A fill, stop exit or order that did not fill, at one session. */
+export interface UsAdvisoryExecution {
   symbol: string;
   side: "BUY" | "SELL";
   qty: number;
   price: number;
-  status: string;                // FILLED | CANCELLED
+  status: string;                // FILLED | CANCELLED (| PENDING for a suggestion)
+  stop_hit: boolean;
+  closed: boolean;               // a SELL of the whole position
   reason: string;
-  pnl: number | null;            // a sell's return on its entry price (fraction)
   note: string;
+  pnl: number | null;            // a sell's return on its entry price (fraction)
+}
+
+/** An order suggested after a close, and what became of it at the next open. */
+export interface UsAdvisorySuggestion extends UsAdvisoryExecution {
+  filled_on: string | null;
+  fill_price: number | null;
+  filled_qty: number | null;
+  stop: number | null;           // tonight's buys only
+}
+
+/** The model book at one session (Daily Detail), newest first. */
+export interface UsAdvisoryDay {
+  date: string;
+  equity: number;
+  day_pnl: number;
+  return: number;                // since the start (fraction)
+  names: number;                 // held at that close
+  suggested: UsAdvisorySuggestion[];
+  executed: UsAdvisoryExecution[];
 }
 
 export interface UsAdvisoryFacts {
@@ -582,7 +603,7 @@ export interface UsAdvisoryResponse {
   orders?: UsAdvisoryOrder[];
   holdings?: UsAdvisoryHolding[];
   equity_curve?: { date: string; equity: number }[];
-  trades?: UsAdvisoryTrade[];
+  days?: UsAdvisoryDay[];
 }
 
 // ─── Options ──────────────────────────────────────────────────────────────
