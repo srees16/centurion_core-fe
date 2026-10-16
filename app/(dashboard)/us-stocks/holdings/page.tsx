@@ -1,19 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { DriveWealthAuth } from "@/components/forms/drivewealth-auth";
-import { OrderForm } from "@/components/forms/order-form";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
 import { RibbonVixBar } from "@/components/common/ribbon-vix-bar";
 import { Spinner } from "@/components/common/spinner";
 import { NASDAQ_50_TICKERS } from "@/lib/constants";
 import { useDriveWealth } from "@/hooks/use-drivewealth";
+import { useAuthStore } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/utils";
 
 export default function USHoldingsPage() {
   const {
     login, isLoggingIn, loginError, account, isConnected,
-    positions, fetchPositions, placeOrder, isOrdering, orderError, logout,
+    positions, fetchPositions, logout,
   } = useDriveWealth();
+  const isUser = useAuthStore((s) => s.user?.role === "user");
 
   const totalPnl = positions.reduce((a, p) => a + p.unrealized_pnl, 0);
 
@@ -31,14 +33,13 @@ export default function USHoldingsPage() {
             onLogout={logout}
           />
 
-          {isConnected && (
-            <OrderForm
-              tickers={positions.map((p) => p.symbol)}
-              onSubmit={(o) => placeOrder({ symbol: o.ticker, side: o.side, order_type: o.order_type, quantity: o.quantity, limit_price: o.limit_price })}
-              isSubmitting={isOrdering}
-              error={orderError}
-            />
-          )}
+          {/* US1: US stocks are advisory only, so no order is sent from here */}
+          <p className="text-xs text-muted-foreground">
+            US stocks are advisory only: nothing is ordered from Centurion. Place orders in your broker&apos;s app
+            (fractional shares allowed).
+            {!isUser && <> The <Link href="/us-stocks/advisory" className="underline">Advisory</Link> page has the
+              next open&apos;s suggestions.</>}
+          </p>
         </div>
 
         <div className="md:col-span-3 space-y-4">

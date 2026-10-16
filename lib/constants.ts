@@ -225,8 +225,17 @@ export const APP_MODULES = [
   { key: "rag-engine", label: "RAG Engine", href: "/rag-engine" },
 ] as const;
 
-export const US_SUB_PAGES = [
+/** A stock module's sub-page; ``operatorOnly`` pages are hidden from signed-up users (role "user"). */
+export interface SubPage {
+  key: string;
+  label: string;
+  href: string;
+  operatorOnly?: boolean;
+}
+
+export const US_SUB_PAGES: SubPage[] = [
   { key: "main", label: "Main", href: "/us-stocks" },
+  { key: "advisory", label: "Advisory", href: "/us-stocks/advisory", operatorOnly: true },
   { key: "fundamentals", label: "Fundamentals", href: "/us-stocks/fundamentals" },
   { key: "verdict", label: "Verdict", href: "/us-stocks/verdict" },
   { key: "backtest", label: "Backtest", href: "/us-stocks/backtest" },
