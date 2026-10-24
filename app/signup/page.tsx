@@ -80,7 +80,7 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthCard title="Create your Centurion account" subtitle="Connecting a Zerodha DMAT account is optional" wide>
+    <AuthCard title="Create your Centurion account" subtitle="Optional Zerodha Demat account connection" wide>
       <FormError message={error} />
       <form onSubmit={submit} className="space-y-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
