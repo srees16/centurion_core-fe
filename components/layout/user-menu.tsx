@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { LogOut, Moon, Settings, Sun, User, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,6 +66,14 @@ export function UserMenu() {
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
+
+        {/* Signed-up users (MU2): the admin only */}
+        {user.role === "admin" && (
+          <DropdownMenuItem onClick={() => router.push("/admin/users")}>
+            <Users className="mr-2 h-4 w-4" />
+            Users
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuSeparator />
 

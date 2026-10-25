@@ -24,7 +24,7 @@ import {
   useMetricsJournal,
 } from "@/hooks/use-trade-monitor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency, formatPct, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatDayDMY, formatPct, formatNumber } from "@/lib/utils";
 import {
   Activity, CheckCircle, XCircle, AlertTriangle,
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown,
@@ -429,7 +429,7 @@ function SessionActivityCard({ session, date, snapshot, trades }: {
       return (
         <div className="content-panel p-4 border-l-4 border-l-amber-500 bg-amber-500/5">
           <h3 className="text-sm font-semibold flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" /> No session on {date}
+            <AlertTriangle className="h-4 w-4 text-amber-500" /> No session on {formatDayDMY(date)}
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
             No snapshot was recorded, so the engine did not run this day.
@@ -440,7 +440,7 @@ function SessionActivityCard({ session, date, snapshot, trades }: {
     return (
       <div className="content-panel p-4 border-l-4 border-l-blue-500 bg-blue-500/5">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Activity className="h-4 w-4 text-blue-500" /> Session {date}
+          <Activity className="h-4 w-4 text-blue-500" /> Session {formatDayDMY(date)}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
           {traded > 0
@@ -461,7 +461,7 @@ function SessionActivityCard({ session, date, snapshot, trades }: {
   return (
     <div className="content-panel p-4 border-l-4 border-l-blue-500 bg-blue-500/5">
       <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-        <Activity className="h-4 w-4 text-blue-500" /> Session {session.session_date}
+        <Activity className="h-4 w-4 text-blue-500" /> Session {formatDayDMY(session.session_date)}
         <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
           session.rebalance_day ? "bg-blue-500/10 text-blue-600" : "bg-muted text-muted-foreground"
         }`}>{session.rebalance_day ? "rebalance day" : "hold day"}</span>
@@ -1115,23 +1115,24 @@ function DailyDetailPanel({ book }: { book: string }) {
                     dt === selectedDate ? "bg-primary text-primary-foreground border-primary" : resting
                   }`}
                 >
-                  {dt}
+                  {formatDayDMY(dt)}
                 </button>
               );
             })}
           </div>
         )}
         <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
+          {/* Filled dots, the date buttons' colours: an outlined square read as an empty checkbox */}
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded border border-green-500/50 bg-green-500/15" />
+            <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-green-500" />
             holdings changed
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded border border-amber-500/50 bg-amber-500/15" />
+            <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" />
             rebalance decided, fills next session
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded border border-border bg-background" />
+            <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/40" />
             held
           </span>
         </div>
@@ -1165,7 +1166,7 @@ function DailyDetailPanel({ book }: { book: string }) {
           {d.snapshot && (
             <div>
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" /> Day Snapshot — {d.date}
+                <BarChart3 className="h-4 w-4" /> Day Snapshot — {formatDayDMY(d.date)}
               </h3>
               <MetricsGrid>
                 <MetricCard label="Equity" value={formatCurrency(d.snapshot.equity, "INR")} />
@@ -1262,7 +1263,7 @@ function DailyDetailPanel({ book }: { book: string }) {
           {!d.snapshot && d.signals.length === 0 && d.executions_count === 0 && (
             <div className="content-panel p-6 text-center text-muted-foreground">
               <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No activity recorded for {d.date}</p>
+              <p className="text-sm">No activity recorded for {formatDayDMY(d.date)}</p>
             </div>
           )}
         </>

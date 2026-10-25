@@ -36,6 +36,7 @@ export default function PrivacyPage() {
             The emails go out through Google&apos;s Gmail API with permission to send email only; Centurion cannot read
             any mailbox.
           </p>
+          <p>Centurion&apos;s operator can see your account details, never your password, to run the service.</p>
         </section>
         <section className="space-y-2">
           <h2 className="font-semibold text-foreground">Where it is kept</h2>
