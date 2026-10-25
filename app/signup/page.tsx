@@ -71,7 +71,7 @@ export default function SignupPage() {
   if (done) {
     return (
       <AuthCard title="Check your inbox" subtitle="One step left: activate your account">
-        <FormNotice message={`${done} The link works for 24 hours.`} />
+        <FormNotice message={`${done} The link is active for 24 hours.`} />
         <p className="text-sm text-center text-muted-foreground">
           Activated already? <Link href="/login" className="text-primary hover:underline">Sign in</Link>
         </p>
