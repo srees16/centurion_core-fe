@@ -131,7 +131,8 @@ export default function LoginPage() {
           </p>
 
           <p className="text-xs text-center text-muted-foreground">
-            Centurion Capital LLC — Enterprise Trading Platform
+            Centurion Capital LLC — Enterprise Trading Platform ·{" "}
+            <Link href="/privacy" className="hover:underline">Privacy</Link>
           </p>
         </div>
       </div>
