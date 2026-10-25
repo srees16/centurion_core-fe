@@ -29,6 +29,12 @@ export function formatPct(n: number, decimals = 2): string {
   return `${n >= 0 ? "+" : ""}${n.toFixed(decimals)}%`;
 }
 
+/** A date (YYYY-MM-DD, or a timestamp starting with one) shown as DD-MM-YYYY; the API keeps ISO dates. */
+export function formatDayDMY(iso: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? "");
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : iso || "—";
+}
+
 /** Parse comma-separated tickers */
 export function parseTickers(input: string): string[] {
   return input
