@@ -47,7 +47,10 @@ export default function PrivacyPage() {
         <section className="space-y-2">
           <h2 className="font-semibold text-foreground">Deleting your data</h2>
           <p>
-            Settings → Delete account erases your account and your connected Zerodha account&apos;s records.
+            Settings → Delete account asks for your consent and your password, then erases your account, your profile
+            and Centurion&apos;s records of any Zerodha account you connected from every Centurion database, and
+            confirms by email. Backups never contain them. The database host&apos;s automatic recovery history keeps
+            deleted data for up to a day before it is gone. Emails already sent to you stay in your mailbox.
           </p>
         </section>
         <section className="space-y-2">
