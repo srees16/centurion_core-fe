@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -22,11 +23,13 @@ import { api } from "@/lib/api-client";
 
 const CONFIRM_WORD = "DELETE";
 
-/** A signed-up user deletes their own account (tracker MU2): password and a typed word, then sign-out. */
+/** A signed-up user deletes their own account (tracker MU2): the warning, their consent, then password and a typed
+ *  word; then sign-out and a confirmation email. */
 export function DeleteAccountSection() {
   const router = useRouter();
   const logout = useAuthStore((s) => s.logout);
   const [open, setOpen] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [password, setPassword] = useState("");
   const [word, setWord] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +37,7 @@ export function DeleteAccountSection() {
 
   const changeOpen = (next: boolean) => {
     if (next) {
+      setConsent(false);
       setPassword("");
       setWord("");
       setError(null);
@@ -74,12 +78,26 @@ export function DeleteAccountSection() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Delete your account?</DialogTitle>
-            <DialogDescription>
-              Your details and Centurion&apos;s records of your Zerodha account are erased, and you are signed out.
-              Stop-loss orders Centurion placed stay at Zerodha until you delete them in Kite.
-            </DialogDescription>
+            <DialogDescription>This permanently deletes your Centurion account. It cannot be undone.</DialogDescription>
           </DialogHeader>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+            <li>Your sign-in and the details you gave at sign-up are erased from every Centurion database.</li>
+            <li>
+              If you connected a Zerodha account, Centurion stops managing it and erases its records of it: keys,
+              daily logins and the orders it built.
+            </li>
+            <li>
+              Your shares and positions stay in your Zerodha account. Stop-loss orders Centurion placed stay at Zerodha
+              until you delete them in Kite.
+            </li>
+            <li>You are signed out everywhere. To use Centurion again, you would sign up afresh.</li>
+          </ul>
           <form onSubmit={submit} className="space-y-3">
+            <label htmlFor="del-consent" className="flex items-start gap-2 text-sm">
+              <Checkbox id="del-consent" checked={consent} onCheckedChange={(v) => setConsent(v === true)}
+                        className="mt-0.5" />
+              <span>I understand that my account is deleted permanently and cannot be recovered.</span>
+            </label>
             <div className="space-y-1">
               <Label htmlFor="del-password">Password</Label>
               <Input id="del-password" type="password" autoComplete="current-password" value={password}
@@ -92,7 +110,8 @@ export function DeleteAccountSection() {
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" variant="destructive" disabled={!password || word !== CONFIRM_WORD || busy}>
+              <Button type="submit" variant="destructive"
+                      disabled={!consent || !password || word !== CONFIRM_WORD || busy}>
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Delete account
               </Button>
