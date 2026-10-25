@@ -835,6 +835,39 @@ export interface AuthUser {
   role: string;
 }
 
+/** A signed-up user as the admin sees them (GET /api/v1/admin/users, tracker MU2). */
+export interface AdminUser {
+  id: number;
+  email: string;
+  full_name: string;
+  date_of_birth: string;
+  gender: string;
+  phone: string;
+  city: string;
+  state: string;
+  country: string;
+  trading_experience: string;
+  status: string;
+  created_at: string;
+  activated_at: string | null;
+  last_login_at: string | null;
+  zerodha_connected: boolean;
+}
+
+export interface AdminUsersResponse {
+  stats: {
+    total: number;
+    active: number;
+    pending: number;
+    new_last_7_days: number;
+    zerodha_connected: number;
+    by_experience: Record<string, number>;
+    by_gender: Record<string, number>;
+    by_country: Record<string, number>;
+  };
+  users: AdminUser[];
+}
+
 export interface LoginRequest {
   username: string;
   password: string;
