@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { TickerInput } from "@/components/forms/ticker-input";
+import { MarketOverview } from "@/components/common/market-overview";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
 import { RibbonVixBar } from "@/components/common/ribbon-vix-bar";
 import { Spinner } from "@/components/common/spinner";
@@ -50,6 +51,7 @@ export default function USStocksPage() {
         {/* Main content */}
         <div className="md:col-span-3 space-y-4">
           {isRunning && <Spinner />}
+          {!isRunning && signals.length === 0 && <MarketOverview market="US" />}
 
           {signals.length > 0 && (
             <>
