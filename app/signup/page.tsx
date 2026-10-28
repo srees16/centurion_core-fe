@@ -218,7 +218,7 @@ export default function SignupPage() {
         <div className="space-y-1">
           <label htmlFor="su-consent" className="flex items-start gap-2 text-sm">
             <Checkbox id="su-consent" checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" />
-            <span>I agree that Centurion stores these details to run my account and to email me about it.</span>
+            <span>I agree that Centurion stores these details to run my account.</span>
           </label>
           {fieldError("consent")}
         </div>
