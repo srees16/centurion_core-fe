@@ -44,8 +44,8 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
 
   const sorted = [...symbols].sort();
 
-  const handleResult = (txn: string, result: { order_id: string }) => {
-    setMsg({ type: "success", text: `${txn} order placed — ID: ${result.order_id}` });
+  const handleResult = (txn: string, result: { order_id: string; duplicate?: boolean }) => {
+    setMsg({ type: "success", text: `${txn} order ${result.duplicate ? "already placed" : "placed"} — ID: ${result.order_id}` });
   };
 
   const handleError = (err: Error) => {
