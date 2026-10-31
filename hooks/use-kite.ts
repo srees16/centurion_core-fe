@@ -119,6 +119,14 @@ export function useKiteOrders() {
   return useQuery(useKiteDataQuery<KiteOrder[]>(["kite-orders"], "/api/v1/kite/orders"));
 }
 
+/** One key per confirmed order (Kite tags: letters and digits, at most 20): the API returns the first order for a repeat. */
+function orderTag(): string {
+  return `m${crypto.randomUUID().replaceAll("-", "").slice(0, 19)}`;
+}
+
+const ORDER_NO_ANSWER =
+  "No clear answer from the server: the order may have been placed. Check your orders in Kite before placing it again.";
+
 export function useKitePlaceOrder() {
   const qc = useQueryClient();
   return useMutation({
@@ -133,7 +141,10 @@ export function useKitePlaceOrder() {
       product?: string;
       validity?: string;
       variety?: string;
-    }) => api.post<{ order_id: string }>("/api/v1/kite/orders", order),
+    }) =>
+      api.postOnce<{ order_id: string; duplicate?: boolean }>(
+        "/api/v1/kite/orders", { ...order, tag: orderTag() }, ORDER_NO_ANSWER,
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["kite-orders"] });
       qc.invalidateQueries({ queryKey: ["kite-positions"] });
