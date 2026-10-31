@@ -113,6 +113,25 @@ class ApiClient {
   }
 
   /**
+   * POST exactly once, for a request that moves money.  A 5xx or a lost connection can mean the order reached the
+   * exchange and only the answer was lost, so it is never repeated: the caller gets `noAnswer` to show instead.
+   */
+  async postOnce<T>(path: string, body: unknown, noAnswer: string): Promise<T> {
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}${path}`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(body),
+      });
+    } catch {
+      throw new Error(noAnswer);
+    }
+    if (res.status >= 500) throw new Error(noAnswer);
+    return this.handleResponse<T>(res);
+  }
+
+  /**
    * POST directly to the backend (bypasses Next.js rewrite proxy).
    * Use for long-running endpoints that exceed the proxy timeout.
    */
