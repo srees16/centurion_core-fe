@@ -1425,6 +1425,28 @@ export interface JournalRow {
   verdict: string | null;        // experiments: FAIL, CLOSED or NO-GO
 }
 
+/** The checks the first real session runs (GET /kite/go-live, owner only), and the ladder once live. */
+export interface GoLiveCheck {
+  name: string;
+  ok: boolean;
+  detail: string;
+}
+
+export interface GoLiveStatus {
+  ready: boolean;
+  live: boolean;
+  canary_capital: number;
+  checks: GoLiveCheck[];
+  ladder: {
+    rung: number;
+    rungs: number;
+    capital: number;
+    sessions: number;
+    sessions_needed: number;
+    since: string;
+  } | null;
+}
+
 /** The paper book at a week's last session; Sharpe only from 20 sessions. */
 export interface JournalPaperPoint {
   date: string;
