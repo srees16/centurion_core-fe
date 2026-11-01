@@ -617,25 +617,23 @@ export interface IndexQuote {
 
 export interface OptionChainRow {
   strike: number;
-  ce_oi: number;
-  ce_chg_oi: number;
-  ce_volume: number;
-  ce_iv: number;
-  ce_ltp: number;
-  ce_delta?: number;
-  ce_gamma?: number;
-  ce_theta?: number;
-  ce_vega?: number;
-  pe_oi: number;
-  pe_chg_oi: number;
-  pe_volume: number;
-  pe_iv: number;
-  pe_ltp: number;
-  pe_delta?: number;
-  pe_gamma?: number;
-  pe_theta?: number;
-  pe_vega?: number;
-  moneyness?: "ITM" | "ATM" | "OTM";
+  ce_oi: number | null;
+  ce_volume: number | null;
+  ce_iv: number | null;
+  ce_ltp: number | null;
+  ce_delta: number | null;
+  ce_gamma: number | null;
+  ce_theta: number | null;
+  ce_vega: number | null;
+  pe_oi: number | null;
+  pe_volume: number | null;
+  pe_iv: number | null;
+  pe_ltp: number | null;
+  pe_delta: number | null;
+  pe_gamma: number | null;
+  pe_theta: number | null;
+  pe_vega: number | null;
+  moneyness: "ITM" | "ATM" | "OTM";
 }
 
 // ─── Options Overlay Strategies ───────────────────────────────────────────
@@ -650,11 +648,14 @@ export interface OverlayOrder {
   lots: number;
   lot_size: number;
   underlying_price: number;
+  tradingsymbol: string;
+  iv_rank: number;
 }
 
 export interface MultiLegOrder {
   strategy_type: string;
   underlying: string;
+  expiry: string;
   legs: {
     strike: number;
     type: string;
@@ -668,23 +669,23 @@ export interface MultiLegOrder {
   max_profit: number;
   pop: number;
   margin_required: number;
+  iv_rank: number;
 }
 
 export interface OverlayScanResult {
   covered_calls: OverlayOrder[];
   cash_secured_puts: OverlayOrder[];
   iron_condors: MultiLegOrder[];
-  strangles: MultiLegOrder[];
   summary: {
     total_premium: number;
     overlay_premium: number;
     multileg_premium: number;
+    capital: number;
     monthly_yield_pct: number;
     annualized_yield_pct: number;
     covered_call_count: number;
     csp_count: number;
     iron_condor_count: number;
-    strangle_count: number;
   };
   log: string[];
 }
