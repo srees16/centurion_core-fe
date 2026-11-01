@@ -1438,6 +1438,8 @@ export interface GoLiveStatus {
   live: boolean;
   canary_capital: number;
   checks: GoLiveCheck[];
+  /** How often each control has run in the deployed paper record; null when it cannot be read. Not a check. */
+  coverage: { path: string; count: number }[] | null;
   ladder: {
     rung: number;
     rungs: number;

@@ -703,7 +703,8 @@ function GoLivePanel() {
       </div>
     );
   }
-  const { ready, live, ladder, checks, canary_capital: canary } = status;
+  const { ready, live, ladder, checks, coverage, canary_capital: canary } = status;
+  const untested = (coverage ?? []).filter((c) => c.count === 0).map((c) => c.path);
   const title = live ? "Live: capital ladder" : ready ? "Go-live checks: all clear" : "Go-live checks: not ready";
   return (
     <div className={`content-panel p-4 border-l-4 ${
@@ -729,6 +730,13 @@ function GoLivePanel() {
             </li>
           ))}
         </ul>
+      )}
+      {!live && coverage && (
+        <p className="text-xs mt-2">
+          <strong>Run so far on paper:</strong>{" "}
+          {coverage.filter((c) => c.count > 0).map((c) => `${c.path} ${c.count}`).join(", ") || "nothing yet"}.
+          {untested.length > 0 && ` Never run: ${untested.join(", ")}. Untested is not passed.`}
+        </p>
       )}
       <p className="text-xs text-muted-foreground mt-2">
         These test that the book behaves like its backtest and that the machinery works. Paper Sharpe is not one:
