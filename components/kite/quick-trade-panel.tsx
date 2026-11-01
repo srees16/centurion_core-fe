@@ -66,6 +66,10 @@ export function QuickTradePanel({ symbols }: QuickTradePanelProps) {
   return (
     <div className="content-panel p-4 space-y-3">
       <h3 className="text-sm font-semibold">Quick Trade</h3>
+      <p className="text-xs text-muted-foreground">
+        Orders that add risk are capped at ₹2 lakh each. F&amp;O is capped by stress loss, 15% of live capital; a new
+        short option is refused. Exits are never capped.
+      </p>
       {msg && (
         <p className={`text-xs px-2 py-1 rounded ${msg.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}>
           {msg.text}

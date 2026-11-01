@@ -757,7 +757,8 @@ export function KiteAccountsPanel() {
       {others.length > 0 && (
         <p className="text-xs text-muted-foreground">
           <strong>Dry run</strong> builds each evening&apos;s orders and sends none. <strong>Live</strong> sends them,
-          after 5 clean dry runs. Capital moves up the ladder one rung at a time.
+          after 5 clean dry runs, starting at the first rung. Capital moves up the ladder one rung at a time, the
+          first rung held for at least 60 sessions.
         </p>
       )}
 
