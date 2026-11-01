@@ -11,6 +11,7 @@ import type {
   PaperSessionsResponse,
   PaperBooksResponse,
   MetricsJournalResponse,
+  GoLiveStatus,
 } from "@/lib/types";
 
 /** Query params for a paper book other than the deployed one (G12). */
@@ -77,6 +78,14 @@ export function useMetricsJournal(book?: string) {
   return useQuery({
     queryKey: ["metrics-journal", book],
     queryFn: () => api.get<MetricsJournalResponse>("/api/v1/screener/monitor/journal", bookParams(book)),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useGoLiveStatus() {
+  return useQuery({
+    queryKey: ["go-live"],
+    queryFn: () => api.get<GoLiveStatus>("/api/v1/kite/go-live"),
     staleTime: 10 * 60_000,
   });
 }

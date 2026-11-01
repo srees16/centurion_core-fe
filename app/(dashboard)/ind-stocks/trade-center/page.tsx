@@ -22,6 +22,7 @@ import {
   useDailyDetail,
   usePaperSessions,
   useMetricsJournal,
+  useGoLiveStatus,
 } from "@/hooks/use-trade-monitor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDayDMY, formatPct, formatNumber } from "@/lib/utils";
@@ -690,6 +691,53 @@ function PaperTradingControl() {
 
 /* ── Paper Validation Section ──────────────────────────────────────────── */
 
+/** The checks the first real session runs, so this page cannot call ready what the session would refuse. */
+function GoLivePanel() {
+  const statusQ = useGoLiveStatus();
+  if (statusQ.isLoading) return <Spinner />;
+  const status = statusQ.data;
+  if (!status) {
+    return (
+      <div className="content-panel p-4">
+        <p className="text-sm text-muted-foreground text-center">Go-live status unavailable.</p>
+      </div>
+    );
+  }
+  const { ready, live, ladder, checks, canary_capital: canary } = status;
+  const title = live ? "Live: capital ladder" : ready ? "Go-live checks: all clear" : "Go-live checks: not ready";
+  return (
+    <div className={`content-panel p-4 border-l-4 ${
+      live || ready ? "border-l-green-500 bg-green-500/5" : "border-l-amber-500 bg-amber-500/5"
+    }`}>
+      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+        <Target className="h-4 w-4" /> {title}
+      </h3>
+      {ladder && (
+        <p className="text-xs mb-2">
+          Rung {ladder.rung} of {ladder.rungs}, {formatCurrency(ladder.capital, "INR")}: {ladder.sessions} of{" "}
+          {ladder.sessions_needed} sessions before the next rung can be asked for.
+        </p>
+      )}
+      {!live && (
+        <ul className="space-y-1">
+          {checks.map((c) => (
+            <li key={c.name} className="text-xs flex items-start gap-2">
+              {c.ok
+                ? <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0 mt-px" />
+                : <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0 mt-px" />}
+              <span><strong>{c.name}:</strong> {c.detail}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="text-xs text-muted-foreground mt-2">
+        These test that the book behaves like its backtest and that the machinery works. Paper Sharpe is not one:
+        60 sessions cannot measure it. Live starts at the {formatCurrency(canary, "INR")} canary.
+      </p>
+    </div>
+  );
+}
+
 function PaperValidationPanel({ book }: { book: string }) {
   const dashQ = usePaperDashboard(book);
   const snapQ = useDailySnapshots(book);
@@ -865,28 +913,7 @@ function PaperValidationPanel({ book }: { book: string }) {
         </div>
       )}
 
-      {/* Verdict */}
-      {snapshots.length >= 15 && dash && (
-        <div className={`content-panel p-4 border-l-4 ${
-          dash.sharpe_ratio >= 0.5 && dash.max_drawdown_pct < 30
-            ? "border-l-green-500 bg-green-500/5"
-            : dash.sharpe_ratio >= 0.2
-              ? "border-l-amber-500 bg-amber-500/5"
-              : "border-l-red-500 bg-red-500/5"
-        }`}>
-          <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            {dash.sharpe_ratio >= 0.5 && dash.max_drawdown_pct < 30
-              ? "VERDICT: PASS — Ready for live trading"
-              : dash.sharpe_ratio >= 0.2
-                ? "VERDICT: MARGINAL — Consider extending paper period"
-                : "VERDICT: FAIL — Do not go live, needs investigation"}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Based on {snapshots.length} trading days | Sharpe {dash.sharpe_ratio.toFixed(3)} | Max DD {formatPct(dash.max_drawdown_pct)}
-          </p>
-        </div>
-      )}
+      <GoLivePanel />
     </div>
   );
 }
