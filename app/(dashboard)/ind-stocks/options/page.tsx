@@ -12,15 +12,18 @@ import { useIndexQuotes, useOptionChain, useOptionExpiries, useOverlayScan } fro
 import { INDEX_OPTIONS, NIFTY_50_TICKERS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
-import { Play, Shield, TrendingDown, Layers, AlertTriangle } from "lucide-react";
+import { Play, Shield, TrendingDown, Layers } from "lucide-react";
 import type { OverlayOrder, MultiLegOrder } from "@/lib/types";
 
 type MoneynessFilter = "ALL" | "ITM" | "ATM" | "OTM";
 
+const fmtNum = (v: number | null, digits: number) => (v === null ? "-" : v.toFixed(digits));
+const fmtCount = (v: number | null) => (v === null ? "-" : v.toLocaleString());
+
 /* ────────── Overlay Order Table ────────── */
 function OverlayOrderTable({ orders, type }: { orders: OverlayOrder[]; type: "CC" | "CSP" }) {
   if (orders.length === 0)
-    return <p className="text-sm text-muted-foreground">No {type === "CC" ? "covered call" : "cash-secured put"} opportunities found.</p>;
+    return <p className="text-sm text-muted-foreground">No {type === "CC" ? "covered call" : "cash-secured put"} passed the scan; the log below says why.</p>;
   return (
     <table className="w-full text-sm">
       <thead>
@@ -56,9 +59,9 @@ function OverlayOrderTable({ orders, type }: { orders: OverlayOrder[]; type: "CC
 }
 
 /* ────────── Multi-Leg Table ────────── */
-function MultiLegTable({ orders, type }: { orders: MultiLegOrder[]; type: "IC" | "STR" }) {
+function MultiLegTable({ orders }: { orders: MultiLegOrder[] }) {
   if (orders.length === 0)
-    return <p className="text-sm text-muted-foreground">No {type === "IC" ? "iron condor" : "strangle"} opportunities found.</p>;
+    return <p className="text-sm text-muted-foreground">No iron condor passed the scan; the log below says why.</p>;
   return (
     <table className="w-full text-sm">
       <thead>
@@ -130,7 +133,7 @@ export default function INDOptionsPage() {
           <TabsTrigger value="chain">Option Chain</TabsTrigger>
           <TabsTrigger value="strategies">
             Overlay Strategies
-            {scan && <Badge variant="secondary" className="ml-2 text-[10px]">{scan.summary.covered_call_count + scan.summary.csp_count + scan.summary.iron_condor_count + scan.summary.strangle_count}</Badge>}
+            {scan && <Badge variant="secondary" className="ml-2 text-[10px]">{scan.summary.covered_call_count + scan.summary.csp_count + scan.summary.iron_condor_count}</Badge>}
           </TabsTrigger>
         </TabsList>
 
@@ -170,46 +173,51 @@ export default function INDOptionsPage() {
           </div>
 
           {chainQ.isLoading && <Spinner />}
+          {(expiriesQ.error || chainQ.error) && (
+            <p className="text-sm text-red-500">
+              {String((expiriesQ.error ?? chainQ.error) instanceof Error
+                ? (expiriesQ.error ?? chainQ.error)?.message
+                : (expiriesQ.error ?? chainQ.error))}
+            </p>
+          )}
           {filteredChain.length > 0 && (
             <div className="content-panel p-4 overflow-x-auto">
               <h4 className="text-sm font-semibold mb-2">Option Chain — {symbol} {expiry}</h4>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-muted-foreground">
-                    <th colSpan={9} className="py-2 text-center border-r bg-green-500/5">CALLS</th>
+                    <th colSpan={8} className="py-2 text-center border-r bg-green-500/5">CALLS</th>
                     <th className="py-2 px-3">Strike</th>
-                    <th colSpan={9} className="py-2 text-center border-l bg-red-500/5">PUTS</th>
+                    <th colSpan={8} className="py-2 text-center border-l bg-red-500/5">PUTS</th>
                   </tr>
                   <tr className="border-b text-muted-foreground text-xs">
-                    <th className="py-1 px-1">OI</th><th className="py-1 px-1">ΔOI</th><th className="py-1 px-1">Vol</th><th className="py-1 px-1">IV</th><th className="py-1 px-1">LTP</th>
+                    <th className="py-1 px-1">OI</th><th className="py-1 px-1">Vol</th><th className="py-1 px-1">IV</th><th className="py-1 px-1">LTP</th>
                     <th className="py-1 px-1">Δ</th><th className="py-1 px-1">Γ</th><th className="py-1 px-1">Θ</th><th className="py-1 px-1 border-r">V</th>
                     <th className="py-1 px-3 font-bold">Strike</th>
-                    <th className="py-1 px-1 border-l">LTP</th><th className="py-1 px-1">IV</th><th className="py-1 px-1">Vol</th><th className="py-1 px-1">ΔOI</th><th className="py-1 px-1">OI</th>
+                    <th className="py-1 px-1 border-l">LTP</th><th className="py-1 px-1">IV</th><th className="py-1 px-1">Vol</th><th className="py-1 px-1">OI</th>
                     <th className="py-1 px-1">Δ</th><th className="py-1 px-1">Γ</th><th className="py-1 px-1">Θ</th><th className="py-1 px-1">V</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredChain.map((row) => (
                     <tr key={row.strike} className={`border-b hover:bg-muted/30 ${row.moneyness === "ATM" ? "bg-yellow-500/5" : ""}`}>
-                      <td className="py-1 px-1 text-right">{row.ce_oi.toLocaleString()}</td>
-                      <td className="py-1 px-1 text-right">{row.ce_chg_oi.toLocaleString()}</td>
-                      <td className="py-1 px-1 text-right">{row.ce_volume.toLocaleString()}</td>
-                      <td className="py-1 px-1 text-right">{row.ce_iv.toFixed(1)}</td>
-                      <td className="py-1 px-1 text-right font-mono">{row.ce_ltp.toFixed(2)}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground">{row.ce_delta?.toFixed(2) ?? "-"}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground">{row.ce_gamma?.toFixed(4) ?? "-"}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground">{row.ce_theta?.toFixed(2) ?? "-"}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground border-r">{row.ce_vega?.toFixed(2) ?? "-"}</td>
+                      <td className="py-1 px-1 text-right">{fmtCount(row.ce_oi)}</td>
+                      <td className="py-1 px-1 text-right">{fmtCount(row.ce_volume)}</td>
+                      <td className="py-1 px-1 text-right">{fmtNum(row.ce_iv, 1)}</td>
+                      <td className="py-1 px-1 text-right font-mono">{fmtNum(row.ce_ltp, 2)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground">{fmtNum(row.ce_delta, 2)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground">{fmtNum(row.ce_gamma, 4)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground">{fmtNum(row.ce_theta, 2)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground border-r">{fmtNum(row.ce_vega, 2)}</td>
                       <td className="py-1 px-3 text-center font-bold bg-muted/30">{row.strike}</td>
-                      <td className="py-1 px-1 text-right border-l font-mono">{row.pe_ltp.toFixed(2)}</td>
-                      <td className="py-1 px-1 text-right">{row.pe_iv.toFixed(1)}</td>
-                      <td className="py-1 px-1 text-right">{row.pe_volume.toLocaleString()}</td>
-                      <td className="py-1 px-1 text-right">{row.pe_chg_oi.toLocaleString()}</td>
-                      <td className="py-1 px-1 text-right">{row.pe_oi.toLocaleString()}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground">{row.pe_delta?.toFixed(2) ?? "-"}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground">{row.pe_gamma?.toFixed(4) ?? "-"}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground">{row.pe_theta?.toFixed(2) ?? "-"}</td>
-                      <td className="py-1 px-1 text-right text-muted-foreground">{row.pe_vega?.toFixed(2) ?? "-"}</td>
+                      <td className="py-1 px-1 text-right border-l font-mono">{fmtNum(row.pe_ltp, 2)}</td>
+                      <td className="py-1 px-1 text-right">{fmtNum(row.pe_iv, 1)}</td>
+                      <td className="py-1 px-1 text-right">{fmtCount(row.pe_volume)}</td>
+                      <td className="py-1 px-1 text-right">{fmtCount(row.pe_oi)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground">{fmtNum(row.pe_delta, 2)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground">{fmtNum(row.pe_gamma, 4)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground">{fmtNum(row.pe_theta, 2)}</td>
+                      <td className="py-1 px-1 text-right text-muted-foreground">{fmtNum(row.pe_vega, 2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -251,7 +259,7 @@ export default function INDOptionsPage() {
                   <MetricCard label="Total Premium" value={`₹${scan.summary.total_premium.toLocaleString()}`} color="text-green-500" />
                   <MetricCard label="Monthly Yield" value={`${scan.summary.monthly_yield_pct.toFixed(2)}%`} color="text-green-500" />
                   <MetricCard label="Annualized Yield" value={`${scan.summary.annualized_yield_pct.toFixed(1)}%`} color="text-green-500" />
-                  <MetricCard label="Strategies Found" value={`${scan.summary.covered_call_count + scan.summary.csp_count + scan.summary.iron_condor_count + scan.summary.strangle_count}`} />
+                  <MetricCard label="Strategies Found" value={`${scan.summary.covered_call_count + scan.summary.csp_count + scan.summary.iron_condor_count}`} />
                 </MetricsGrid>
 
                 {/* Covered Calls */}
@@ -281,17 +289,7 @@ export default function INDOptionsPage() {
                     Iron Condors
                     <Badge variant="outline">{scan.iron_condors.length}</Badge>
                   </h4>
-                  <MultiLegTable orders={scan.iron_condors} type="IC" />
-                </div>
-
-                {/* Strangles */}
-                <div className="content-panel p-4">
-                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
-                    Short Strangles
-                    <Badge variant="outline">{scan.strangles.length}</Badge>
-                  </h4>
-                  <MultiLegTable orders={scan.strangles} type="STR" />
+                  <MultiLegTable orders={scan.iron_condors} />
                 </div>
 
                 {/* Log */}
@@ -306,7 +304,7 @@ export default function INDOptionsPage() {
 
             {!scan && !overlayScan.isPending && (
               <div className="content-panel p-8 text-center text-muted-foreground">
-                <p className="text-sm">Click &quot;Scan Overlay Strategies&quot; to find covered calls, cash-secured puts, iron condors, and strangles across F&amp;O stocks.</p>
+                <p className="text-sm">Click &quot;Scan Overlay Strategies&quot; to find covered calls on your holdings, cash-secured puts on the names the book wants, and iron condors on the indices, from listed contracts and live quotes. It reads only: nothing is placed.</p>
               </div>
             )}
           </div>
