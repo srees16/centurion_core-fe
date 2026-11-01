@@ -8,6 +8,7 @@ import { AuthCard, FormError, FormNotice, PasswordChecklist } from "@/components
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api-client";
@@ -143,12 +144,12 @@ export default function SignupPage() {
           </div>
           <div className="space-y-1">
             <Label htmlFor="su-password">Password</Label>
-            <Input type="password" autoComplete="new-password" {...field("password")} />
+            <PasswordInput autoComplete="new-password" {...field("password")} />
             {fieldError("password")}
           </div>
           <div className="space-y-1">
             <Label htmlFor="su-confirm">Confirm password</Label>
-            <Input id="su-confirm" type="password" autoComplete="new-password" value={confirm}
+            <PasswordInput id="su-confirm" autoComplete="new-password" value={confirm}
                    onChange={(e) => setConfirm(e.target.value)}
                    onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
                    aria-invalid={Boolean(shown("confirm"))}

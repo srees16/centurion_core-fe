@@ -7,7 +7,7 @@ import { KeyRound, Loader2 } from "lucide-react";
 
 import { AuthCard, FormError, FormNotice, PasswordChecklist } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api-client";
 import { passwordOk, passwordRules } from "@/lib/password-policy";
@@ -52,13 +52,13 @@ function ResetPassword() {
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="rp-password">New password</Label>
-          <Input id="rp-password" type="password" autoComplete="new-password" autoFocus value={password}
+          <PasswordInput id="rp-password" autoComplete="new-password" autoFocus value={password}
                  onChange={(e) => setPassword(e.target.value)} />
           <PasswordChecklist rules={passwordRules(password)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="rp-confirm">Confirm new password</Label>
-          <Input id="rp-confirm" type="password" autoComplete="new-password" value={confirm}
+          <PasswordInput id="rp-confirm" autoComplete="new-password" value={confirm}
                  onChange={(e) => setConfirm(e.target.value)} />
           {confirm && confirm !== password && <p className="text-xs text-destructive">The passwords do not match</p>}
         </div>

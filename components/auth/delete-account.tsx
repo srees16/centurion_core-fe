@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
@@ -100,7 +101,7 @@ export function DeleteAccountSection() {
             </label>
             <div className="space-y-1">
               <Label htmlFor="del-password">Password</Label>
-              <Input id="del-password" type="password" autoComplete="current-password" value={password}
+              <PasswordInput id="del-password" autoComplete="current-password" value={password}
                      onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div className="space-y-1">
