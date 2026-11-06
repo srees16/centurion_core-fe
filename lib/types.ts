@@ -1137,6 +1137,8 @@ export interface KiteAccountsResponse {
   setup: {
     redirect_url: string;
     static_ip: string | null;
+    /** The backup static IP (ZR2): every account's whitelist needs both, the primary on the first line. */
+    static_ip_secondary: string | null;
     rungs: number[];
     /** The terms each holder accepts after their Kite login (MU1). */
     terms: { version: string; items: string[] };
@@ -1447,6 +1449,19 @@ export interface GoLiveStatus {
     sessions: number;
     sessions_needed: number;
     since: string;
+  } | null;
+  /** MON1's live monitors as the last live session left them; null before the first live session. */
+  monitors: {
+    /** The cumulative gap band; status "not armed" until sigma is fixed at RA1, "waiting" before 60 sessions. */
+    gap_band: {
+      status: "not armed" | "waiting" | "OK" | "WATCH" | "BREACH";
+      line: string;
+      hold: boolean;
+      checkpoint: number | null;
+      sessions: number;
+    } | null;
+    /** The monthly universe rank IC; read at 12 months only. */
+    rank_ic: { months: number; mean: number | null; t: number | null; verdict: string; line: string } | null;
   } | null;
 }
 
