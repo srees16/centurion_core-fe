@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/hooks/use-auth";
-import { LiveQuotesTable } from "@/components/tables/live-quotes-table";
+import { QuoteWatchlist } from "@/components/kite/quote-watchlist";
 import { QuickTradePanel } from "@/components/kite/quick-trade-panel";
 import { KiteAccountsPanel } from "@/components/kite/kite-accounts-panel";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
@@ -12,7 +12,6 @@ import {
   useKiteSessionStart,
   useKiteSessionStop,
   useKiteSessionComplete,
-  useKiteQuotes,
   useKiteHoldings,
   useKitePositions,
   useKiteOrders,
@@ -173,7 +172,6 @@ function holdingsRows(holdings: KiteHolding[], view: HoldingsView): KiteHolding[
 function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
   const [tab, setTab] = useState("quotes");
   const [holdingsView, setHoldingsView] = useState<HoldingsView>("all");
-  const quotesQ = useKiteQuotes(DEFAULT_IND_TICKERS);
   const holdingsQ = useKiteHoldings();
   const positionsQ = useKitePositions();
   const ordersQ = useKiteOrders();
@@ -246,15 +244,7 @@ function KiteDashboard({ onDisconnect }: { onDisconnect: () => void }) {
         </TabsList>
 
         <TabsContent value="quotes" className="mt-4">
-          {quotesQ.isLoading ? (
-            <Spinner />
-          ) : quotesQ.error ? (
-            <p className="text-sm text-destructive p-4">{quotesQ.error.message}</p>
-          ) : quotesQ.data ? (
-            <div className="content-panel p-4">
-              <LiveQuotesTable quotes={quotesQ.data} />
-            </div>
-          ) : null}
+          <QuoteWatchlist />
         </TabsContent>
 
         <TabsContent value="holdings" className="mt-4">
