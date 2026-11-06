@@ -301,7 +301,18 @@ function AddAccountDialog({ setup, isUser, open, onOpenChange }: {
             , choose the <strong>Connect</strong> plan and paste:
           </p>
           {setup && <CopyValue label="Redirect URL" value={setup.redirect_url} />}
-          {setup?.static_ip && <CopyValue label="IP whitelist" value={setup.static_ip} />}
+          {setup?.static_ip && (
+            <CopyValue label={setup.static_ip_secondary ? "IP, line 1" : "IP whitelist"} value={setup.static_ip} />
+          )}
+          {setup?.static_ip && setup.static_ip_secondary && (
+            <>
+              <CopyValue label="IP, line 2" value={setup.static_ip_secondary} />
+              <p className="text-xs text-muted-foreground">
+                Paste both into the IP whitelist, one per line. Centurion sends orders from the second when the first
+                is down.
+              </p>
+            </>
+          )}
         </section>
 
         <form onSubmit={submit} className="space-y-3">
@@ -751,6 +762,18 @@ export function KiteAccountsPanel() {
           {others.map((a) => (
             <AccountRow key={a.id} account={a} setup={setup} isUser={isUser} onAsk={setAsk} />
           ))}
+        </div>
+      )}
+
+      {others.length > 0 && setup?.static_ip && setup.static_ip_secondary && (
+        <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
+          <p className="text-xs">
+            <strong>Two IPs in every account&apos;s whitelist.</strong> On developers.kite.trade, open each account&apos;s
+            app and make sure its IP whitelist has both lines below. Centurion sends orders from the second when the
+            first is down; an account without it would have its orders refused then. Zerodha allows one change a week.
+          </p>
+          <CopyValue label="IP, line 1" value={setup.static_ip} />
+          <CopyValue label="IP, line 2" value={setup.static_ip_secondary} />
         </div>
       )}
 

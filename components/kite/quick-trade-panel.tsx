@@ -146,7 +146,9 @@ function QuickTab({ symbols, onPlace, isPending }: TabProps) {
 
   return (
     <>
-      <p className="text-xs text-muted-foreground">Market order — instant execution</p>
+      <p className="text-xs text-muted-foreground">
+        Market order, with Kite&apos;s automatic price protection: in a fast move it may not fill
+      </p>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">Symbol</Label>
