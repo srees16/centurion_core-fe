@@ -703,7 +703,9 @@ function GoLivePanel() {
       </div>
     );
   }
-  const { ready, live, ladder, checks, coverage, canary_capital: canary } = status;
+  const { ready, live, ladder, checks, coverage, monitors, canary_capital: canary } = status;
+  const band = monitors?.gap_band;
+  const bandTone = band?.hold ? "text-red-600 font-medium" : band?.status === "WATCH" ? "text-amber-600" : "text-muted-foreground";
   const untested = (coverage ?? []).filter((c) => c.count === 0).map((c) => c.path);
   const title = live ? "Live: capital ladder" : ready ? "Go-live checks: all clear" : "Go-live checks: not ready";
   return (
@@ -718,6 +720,14 @@ function GoLivePanel() {
           Rung {ladder.rung} of {ladder.rungs}, {formatCurrency(ladder.capital, "INR")}: {ladder.sessions} of{" "}
           {ladder.sessions_needed} sessions before the next rung can be asked for.
         </p>
+      )}
+      {live && monitors && (
+        <div className="mb-2 space-y-1">
+          <p className={`text-xs ${bandTone}`}>{band ? band.line : "Gap band (MON1): no reading yet."}</p>
+          <p className="text-xs text-muted-foreground">
+            {monitors.rank_ic ? monitors.rank_ic.line : "Rank IC (MON1): no month scored yet."}
+          </p>
+        </div>
       )}
       {!live && (
         <ul className="space-y-1">
