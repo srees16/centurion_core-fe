@@ -46,5 +46,5 @@ interface LiveQuotesTableProps {
 }
 
 export function LiveQuotesTable({ quotes }: LiveQuotesTableProps) {
-  return <DataTable data={quotes} columns={columns} searchPlaceholder="Search symbols…" compact pageSize={50} />;
+  return <DataTable data={quotes} columns={columns} searchPlaceholder="Filter this list…" compact pageSize={50} />;
 }
