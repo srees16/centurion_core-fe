@@ -6,7 +6,6 @@ import type {
   KitePosition,
   KiteOrder,
   KiteSessionStatus,
-  CarverStatus,
   KiteAccount,
   KiteAccountHoldings,
   KiteAccountMode,
@@ -149,14 +148,6 @@ export function useKitePlaceOrder() {
       qc.invalidateQueries({ queryKey: ["kite-orders"] });
       qc.invalidateQueries({ queryKey: ["kite-positions"] });
     },
-  });
-}
-
-export function useCarverStatus() {
-  return useQuery({
-    queryKey: ["carver-status"],
-    queryFn: () => api.get<CarverStatus>("/ind-stocks/pipeline/carver/status"),
-    staleTime: 5 * 60 * 1000,
   });
 }
 
