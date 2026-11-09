@@ -40,10 +40,6 @@ export const DEFAULT_IND_TICKERS = [
   "SBIN", "LT", "MARUTI", "TITAN",
 ];
 
-export const DEFAULT_FML_TICKERS = [
-  "MSFT", "GOOG", "NVDA", "AMD",
-];
-
 // ─── Nifty 50 Constituents ───────────────────────────────────────────────
 export const NIFTY_50_TICKERS = [
   "RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK",
@@ -68,7 +64,6 @@ export const NASDAQ_50_TICKERS = [
 ];
 
 export const DEFAULT_CRYPTO_TICKERS = ["ETH", "BTC", "LTC"];
-export const DEFAULT_TTS_TICKERS = ["SPY", "QQQ", "IWM", "DIA"];
 
 // ─── NSE Trading Holidays (official calendar, update annually) ───────────
 // Format: "YYYY-MM-DD" — sourced from https://www.nseindia.com/resources/exchange-communication-holidays
@@ -171,56 +166,11 @@ export const RAG_SPINNER_MESSAGES = [
   "Assembling intelligence from the KB…",
 ];
 
-// ─── FML Categories ──────────────────────────────────────────────────────
-export const FML_CATEGORIES = [
-  "Data Structures",
-  "Features",
-  "Modeling",
-  "Backtesting",
-  "Portfolio",
-  "Computation",
-];
-
-export const TTS_CATEGORIES = [
-  "Foundations",
-  "Optimization",
-  "Performance Estimation",
-  "Statistical Testing",
-];
-
-export const ARONSON_CATEGORIES = [
-  "Signal Testing",
-  "Multi-Test Correction",
-  "Composite Validation",
-];
-
-export const EHLERS_CATEGORIES = [
-  "Smoothing & Trend",
-  "Oscillators",
-  "Adaptive Indicators",
-  "Composite Forecast",
-];
-
-export const VINCE_CATEGORIES = [
-  "Position Sizing",
-  "Portfolio",
-  "Monte Carlo",
-];
-
-export const DEFAULT_ARONSON_TICKERS = ["MSFT", "GOOG", "NVDA", "AMD"];
-export const DEFAULT_EHLERS_TICKERS = ["MSFT", "GOOG", "NVDA", "AMD"];
-export const DEFAULT_VINCE_TICKERS = ["MSFT", "GOOG", "NVDA", "AMD"];
-
 // ─── Nav Routes ──────────────────────────────────────────────────────────
 export const APP_MODULES = [
   { key: "us-stocks", label: "US Stocks", href: "/us-stocks" },
   { key: "ind-stocks", label: "Ind Stocks", href: "/ind-stocks" },
   { key: "rl-bot", label: "RL Bot", href: "/rl-bot" },
-  { key: "financial-ml", label: "Financial ML", href: "/financial-ml" },
-  { key: "test-tune", label: "Test & Tune", href: "/test-tune" },
-  { key: "aronson-lab", label: "Aronson Lab", href: "/aronson-lab" },
-  { key: "ehlers-lab", label: "Ehlers DSP", href: "/ehlers-lab" },
-  { key: "vince-lab", label: "Vince Risk", href: "/vince-lab" },
   { key: "crypto", label: "Crypto", href: "/crypto" },
   { key: "rag-engine", label: "RAG Engine", href: "/rag-engine" },
 ] as const;
