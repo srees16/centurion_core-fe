@@ -22,7 +22,13 @@ const nextConfig = {
   async redirects() {
     // The Trade Monitor page was renamed Trade Center (8 Oct 2026): old links and bookmarks,
     // ?tab= and ?book= included, land on the new page
-    return [{ source: "/ind-stocks/trade-monitor", destination: "/ind-stocks/trade-center", permanent: true }];
+    // Portfolio, Compounder, Harvest and R22 Infusion ran the legacy Yahoo-based backtest (survivorship-biased,
+    // not the deployed engine) and Harvest's "Infuse" button did nothing: retired 9 Nov 2026 (tracker UI4).
+    // Temporary redirects, so the pages (kept in the repo) can return if J4 earns a planner page.
+    const retired = ["portfolio", "compounder", "harvest", "r22-infusion"].map((p) => ({
+      source: `/ind-stocks/${p}`, destination: "/ind-stocks", permanent: false,
+    }));
+    return [{ source: "/ind-stocks/trade-monitor", destination: "/ind-stocks/trade-center", permanent: true }, ...retired];
   },
   async rewrites() {
     // In production (Vercel), NEXT_PUBLIC_API_URL is set and the browser calls
