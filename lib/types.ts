@@ -690,40 +690,6 @@ export interface OverlayScanResult {
   log: string[];
 }
 
-// ─── Financial ML / Test & Tune ───────────────────────────────────────────
-export interface ChapterInfo {
-  key: string;
-  title: string;
-  category: string;
-  description?: string;
-}
-
-export interface ChapterResult {
-  chapter_key: string;
-  status: "pending" | "running" | "done" | "error";
-  figures: string[]; // base64 PNGs
-  tables: Record<string, unknown>[];
-  text_output: string;
-  error_message?: string;
-}
-
-export interface AsyncBatchProgress {
-  batch_id: string;
-  total: number;
-  completed: number;
-  status?: "aborted";
-  chapters: Record<string, ChapterResult>;
-}
-
-export interface BatchRunHistoryRow {
-  batch_id: string;
-  chapters: string[];
-  status: "running" | "completed" | "error";
-  total: number;
-  completed: number;
-  created_at: string;
-}
-
 // ─── RAG ──────────────────────────────────────────────────────────────────
 export interface RAGResponse {
   query: string;

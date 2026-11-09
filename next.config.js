@@ -28,7 +28,12 @@ const nextConfig = {
     const retired = ["portfolio", "compounder", "harvest", "r22-infusion"].map((p) => ({
       source: `/ind-stocks/${p}`, destination: "/ind-stocks", permanent: false,
     }));
-    return [{ source: "/ind-stocks/trade-monitor", destination: "/ind-stocks/trade-center", permanent: true }, ...retired];
+    // The five book labs (Financial ML, Test & Tune, Aronson, Ehlers, Vince) were removed 9 Nov 2026 (tracker UI5):
+    // old bookmarks land on the home page
+    const labs = ["financial-ml", "test-tune", "aronson-lab", "ehlers-lab", "vince-lab"].map((p) => ({
+      source: `/${p}/:path*`, destination: "/", permanent: false,
+    }));
+    return [{ source: "/ind-stocks/trade-monitor", destination: "/ind-stocks/trade-center", permanent: true }, ...retired, ...labs];
   },
   async rewrites() {
     // In production (Vercel), NEXT_PUBLIC_API_URL is set and the browser calls

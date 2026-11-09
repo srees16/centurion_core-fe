@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Activity, ArrowRight, Briefcase, ClipboardList, Compass, FileText, Filter, FlaskConical, History, Layers,
-  PieChart, Scale, type LucideIcon,
+  Scale, type LucideIcon,
 } from "lucide-react";
 
 import { useAuthStore } from "@/hooks/use-auth";
@@ -40,7 +40,6 @@ const CONTENT: Record<Market, { title: string; tagline: string; facts: Fact[]; t
       { key: "backtest", icon: FlaskConical, text: "Test a strategy on NSE history" },
       { key: "trade-center", icon: ClipboardList, text: "Paper trading: signals, orders and trades" },
       { key: "options", icon: Layers, text: "Covered calls, cash-secured puts, condors and strangles on F&O stocks" },
-      { key: "portfolio", icon: PieChart, text: "Allocate capital across your picks" },
     ],
     pages: IND_SUB_PAGES,
   },
@@ -140,7 +139,6 @@ export function MarketOverview({ market }: { market: Market }) {
             </Link>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">Every tool is also in the sidebar.</p>
       </div>
 
       <p className="text-xs text-muted-foreground border-t pt-3">
