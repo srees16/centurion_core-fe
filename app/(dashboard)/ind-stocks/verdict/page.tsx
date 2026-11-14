@@ -7,6 +7,7 @@ import { VerdictTable } from "@/components/tables/verdict-table";
 import { VerdictRadarChart } from "@/components/charts/radar-chart";
 import { MetricsGrid, MetricCard } from "@/components/common/metrics-cards";
 import { RibbonVixBar } from "@/components/common/ribbon-vix-bar";
+import { LegacyNotice } from "@/components/common/legacy-notice";
 import { Spinner } from "@/components/common/spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -142,6 +143,7 @@ export default function INDVerdictPage() {
   return (
     <div className="space-y-6">
       <RibbonVixBar symbols={NIFTY_50_TICKERS} market="IND" regime={firstRegime} />
+      <LegacyNotice />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="content-panel p-4 space-y-4 min-w-0 overflow-hidden">
           <h3 className="text-sm font-semibold">Verdict Engine</h3>
