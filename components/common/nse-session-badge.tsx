@@ -25,8 +25,18 @@ const LABEL: Record<NseSession["state"], string> = {
   muhurat: "NSE Muhurat day",
 };
 
-/** Green while NSE's session is on (09:15-15:30 IST on a trading day); grey otherwise: before or after hours, the
- *  pre-open, weekends, holidays.  Shown in the header on every Ind stocks page; re-read every minute. */
+/** The pill and its dot by state: green while the session is on, amber in the pre-open (orders taken, no trading
+ *  yet), violet on a Muhurat day (an evening session), grey when closed (after hours, weekends, holidays). */
+const STYLE: Record<NseSession["state"], { pill: string; dot: string }> = {
+  open: { pill: "border-green-500/40 bg-green-500/15 text-green-400", dot: "bg-green-500 animate-pulse" },
+  pre_open: { pill: "border-amber-500/40 bg-amber-500/15 text-amber-400", dot: "bg-amber-400" },
+  muhurat: { pill: "border-violet-500/40 bg-violet-500/15 text-violet-300", dot: "bg-violet-400" },
+  closed: { pill: "border-gray-500/40 bg-gray-500/15 text-gray-400", dot: "bg-gray-400" },
+  weekend: { pill: "border-gray-500/40 bg-gray-500/15 text-gray-400", dot: "bg-gray-400" },
+  holiday: { pill: "border-gray-500/40 bg-gray-500/15 text-gray-400", dot: "bg-gray-400" },
+};
+
+/** NSE's session in the header on every Ind stocks page (``STYLE`` for the colours); re-read every minute. */
 export function NseSessionBadge() {
   const { data } = useQuery({
     queryKey: ["nse-session"],
@@ -44,12 +54,10 @@ export function NseSessionBadge() {
       title={title}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap",
-        data.open
-          ? "border-green-500/40 bg-green-500/15 text-green-400"
-          : "border-gray-500/40 bg-gray-500/15 text-gray-400",
+        STYLE[data.state].pill,
       )}
     >
-      <span className={cn("h-2 w-2 rounded-full", data.open ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
+      <span className={cn("h-2 w-2 rounded-full", STYLE[data.state].dot)} />
       <span className="hidden sm:inline">{LABEL[data.state]}</span>
       <span className="sm:hidden">NSE</span>
     </span>
