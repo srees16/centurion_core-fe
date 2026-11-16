@@ -2,7 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { VIX_CAUTION_THRESHOLD, VIX_PANIC_THRESHOLD } from "@/lib/constants";
-import { useMacroSnapshot, useTickerPrices } from "@/hooks/use-macro";
+import { useLivePrices, useMacroSnapshot, useTickerPrices } from "@/hooks/use-macro";
+import type { LivePrice } from "@/hooks/use-macro";
 import type { RegimeLabel, RiskLevel } from "@/lib/types";
 
 interface RibbonVixBarProps {
@@ -15,10 +16,41 @@ interface RibbonVixBarProps {
   market?: "US" | "IND";
 }
 
+/** A live price pill: the label, the price (₹ in Indian grouping, $ otherwise) per its unit, and its change. */
+function LivePill({ label, p, note }: { label: string; p: LivePrice | null | undefined; note?: string | null }) {
+  if (!p) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded border bg-background" title={note ?? "price unavailable"}>
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-semibold">-</span>
+      </div>
+    );
+  }
+  const amount = p.currency === "INR"
+    ? `₹${p.price.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`
+    : `$${p.price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+  const unit = p.unit === "gram" ? "/g" : p.unit === "kg" ? "/kg" : "";
+  const title = [p.contract ? `MCX ${p.contract}` : p.source, p.as_of].filter(Boolean).join(" · ");
+  return (
+    <div className="flex items-center gap-1 px-2 py-0.5 rounded border bg-background" title={title}>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold">{amount}{unit}</span>
+      {p.change_pct != null && (
+        <span className={p.change_pct >= 0 ? "pnl-positive" : "pnl-negative"}>
+          {p.change_pct >= 0 ? "+" : ""}{p.change_pct.toFixed(2)}%
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function RibbonVixBar({ tickers = [], symbols = [], vix, market, regime, riskLevel, drawdownPct }: RibbonVixBarProps) {
   const inferredMarket = market ?? (symbols.some((s) => ["NIFTY50", "BANKNIFTY", "SENSEX"].includes(s)) ? "IND" : "US");
   const macroQ = useMacroSnapshot(inferredMarket);
   const macro = macroQ.data;
+  // Ind stocks pages: gold and silver in ₹ from MCX, bitcoin in $ (tracker GSB1); US pages keep the $ gold
+  const isInd = inferredMarket === "IND";
+  const live = useLivePrices(isInd).data;
 
   // Fetch live prices for symbols (refreshes every 5s during market hours, 60s after)
   const pricesQ = useTickerPrices(
@@ -152,8 +184,17 @@ export function RibbonVixBar({ tickers = [], symbols = [], vix, market, regime, 
           </div>
         )}
 
-        {/* Gold */}
-        {macro?.gold_price != null && (
+        {/* Gold and silver in ₹ (MCX), bitcoin in $: the Ind stocks pages (GSB1) */}
+        {isInd && live && (
+          <>
+            <LivePill label="Gold" p={live.gold} note={live.note} />
+            <LivePill label="Silver" p={live.silver} note={live.note} />
+            <LivePill label="BTC" p={live.bitcoin} />
+          </>
+        )}
+
+        {/* Gold (US pages: the international price in $) */}
+        {!isInd && macro?.gold_price != null && (
           <div className="flex items-center gap-1 px-2 py-0.5 rounded border bg-background">
             <span className="text-muted-foreground">Gold</span>
             <span className="font-semibold">${macro.gold_price.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
