@@ -25,6 +25,36 @@ export function useFearGreed() {
   });
 }
 
+/** One live price from /api/v1/market/live-prices (tracker GSB1). */
+export interface LivePrice {
+  price: number;
+  change_pct: number | null;
+  currency: "INR" | "USD";
+  unit?: "gram" | "kg";
+  contract?: string;
+  as_of?: string;
+  source?: string;
+}
+
+export interface LivePrices {
+  gold: LivePrice | null;
+  silver: LivePrice | null;
+  bitcoin: LivePrice | null;
+  note: string | null;
+}
+
+/** Gold (₹ a gram) and silver (₹ a kg) from MCX, bitcoin in dollars: the Ind stocks ribbon, once a minute. */
+export function useLivePrices(enabled: boolean) {
+  return useQuery({
+    queryKey: ["live-prices"],
+    queryFn: () => api.get<LivePrices>("/api/v1/market/live-prices"),
+    enabled,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: 1,
+  });
+}
+
 export function useTickerPrices(symbols: string[], market: string) {
   const query = useQuery({
     queryKey: ["ticker-prices", market, symbols],
