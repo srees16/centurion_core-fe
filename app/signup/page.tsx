@@ -39,6 +39,7 @@ export default function SignupPage() {
   });
   const [confirm, setConfirm] = useState("");
   const [consent, setConsent] = useState(false);
+  const [newsletter, setNewsletter] = useState(false); // NL1: off unless ticked
   const [touched, setTouched] = useState<Partial<Record<Field | "confirm" | "consent", boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +95,7 @@ export default function SignupPage() {
         email: form.email.trim().toLowerCase(),
         city: plain(form.city), state: plain(form.state), country: plain(form.country),
         consent,
+        newsletter,
       };
       const res = await api.post<{ message: string }>("/api/v1/auth/signup", body);
       setDone(res.message);
@@ -223,6 +225,15 @@ export default function SignupPage() {
           </label>
           {fieldError("consent")}
         </div>
+
+        <label htmlFor="su-newsletter" className="flex items-start gap-2 text-sm">
+          <Checkbox id="su-newsletter" checked={newsletter} onCheckedChange={(v) => setNewsletter(v === true)}
+                    className="mt-0.5" />
+          <span>
+            Send me the weekly newsletter (optional): every Saturday, the paper portfolio&apos;s week in figures. Stop it
+            any time from the email or Settings.
+          </span>
+        </label>
 
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}

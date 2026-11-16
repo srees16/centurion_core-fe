@@ -8,6 +8,7 @@ import { api } from "@/lib/api-client";
 import { passwordOk, passwordRules } from "@/lib/password-policy";
 import { PasswordChecklist } from "@/components/auth/auth-card";
 import { DeleteAccountSection } from "@/components/auth/delete-account";
+import { NewsletterSection } from "@/components/auth/newsletter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -331,6 +332,9 @@ export default function SettingsPage() {
           </div>
         )}
       </section>
+
+      {/* ── Weekly newsletter (a signed-up user, NL1) ─────── */}
+      {user?.role === "user" && <NewsletterSection />}
 
       {/* ── Delete account (a signed-up user, MU2) ────────── */}
       {user?.role === "user" && <DeleteAccountSection />}
