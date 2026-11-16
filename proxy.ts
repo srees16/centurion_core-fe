@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Signed-out pages: sign-in, and self-service sign-up, activation, password reset and the privacy policy (MU2)
-const PUBLIC_PATHS = ["/login", "/signup", "/activate", "/forgot-password", "/reset-password", "/privacy", "/api"];
+// Signed-out pages: sign-in, and self-service sign-up, activation, password reset and the privacy policy (MU2),
+// and the weekly newsletter's unsubscribe page (NL1)
+const PUBLIC_PATHS = ["/login", "/signup", "/activate", "/forgot-password", "/reset-password", "/privacy",
+                      "/newsletter/unsubscribe", "/api"];
 
 // Next 16's proxy (was middleware.ts): runs on Node before every matched request
 export function proxy(request: NextRequest) {

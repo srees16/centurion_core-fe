@@ -1,5 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
+import { NseSessionBadge } from "@/components/common/nse-session-badge";
 import { UserMenu } from "./user-menu";
 
 interface HeaderBarProps {
@@ -8,6 +11,7 @@ interface HeaderBarProps {
 }
 
 export function HeaderBar({ subtitle, rightContent }: HeaderBarProps) {
+  const indStocks = usePathname()?.startsWith("/ind-stocks") ?? false;
   return (
     <div className="header-bar">
       <div className="min-w-0 flex-1 pl-10 lg:pl-0">
@@ -21,6 +25,7 @@ export function HeaderBar({ subtitle, rightContent }: HeaderBarProps) {
         )}
       </div>
       <div className="flex items-center gap-3 shrink-0 ml-4">
+        {indStocks && <NseSessionBadge />}
         {rightContent}
         <UserMenu />
       </div>
