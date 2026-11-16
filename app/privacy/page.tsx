@@ -29,8 +29,9 @@ export default function PrivacyPage() {
           <h2 className="font-semibold text-foreground">How it is used</h2>
           <p>
             Only to run your account and the features you use, and to send your account emails: activation, password
-            reset and, if you connect Zerodha, the daily Kite login reminder. Your data is not sold, shared for
-            marketing or used for advertising.
+            reset, if you connect Zerodha the daily Kite login reminder and, if you choose it, the weekly newsletter,
+            which you can stop from any issue or in Settings. Your data is not sold, shared for marketing or used for
+            advertising.
           </p>
           <p>
             The emails go out through Google&apos;s Gmail API with permission to send email only; Centurion cannot read
