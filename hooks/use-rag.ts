@@ -3,6 +3,41 @@ import { api } from "@/lib/api-client";
 import type { RAGResponse, RAGSource, RAGChunk } from "@/lib/types";
 import { useState, useCallback, useRef, useEffect } from "react";
 
+/** A Claude model the user may pick for answers (GET /api/v1/rag/models; tracker RAG2). */
+export interface RagModel {
+  id: string;
+  label: string;
+  input_usd: number;
+  output_usd: number;
+}
+
+export interface RagModels {
+  models: RagModel[];
+  default: string;
+  available: boolean;
+  note: string | null;
+}
+
+/** What answered a query: the stream's closing "meta" event. */
+export interface AnswerMeta {
+  source?: "llm" | "cache" | "faq" | "fastpath";
+  provider?: string;
+  model?: string;
+  requested?: string;
+  fallback?: boolean;
+  reason?: string;
+  stop_reason?: string;
+}
+
+export function useRagModels() {
+  return useQuery({
+    queryKey: ["rag-models"],
+    queryFn: () => api.get<RagModels>("/api/v1/rag/models"),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+}
+
 interface IngestTask {
   task_id: string;
   file_name: string;
@@ -98,12 +133,14 @@ export function useRagQuery() {
   const [answer, setAnswer] = useState("");
   const [chunks, setChunks] = useState<RAGChunk[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [meta, setMeta] = useState<AnswerMeta | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const query = useCallback(
-    (q: string, ragEnabled: boolean, sourceIds?: string[]) => {
+    (q: string, ragEnabled: boolean, sourceIds?: string[], model?: string) => {
       setAnswer("");
       setChunks([]);
+      setMeta(null);
       setIsStreaming(true);
 
       eventSourceRef.current?.close();
@@ -112,6 +149,7 @@ export function useRagQuery() {
         rag: String(ragEnabled),
       };
       if (sourceIds?.length) params.sources = sourceIds.join(",");
+      if (model) params.model = model;
 
       const es = api.createSSE("/api/v1/rag/query", params);
       let buffer = "";
@@ -130,6 +168,12 @@ export function useRagQuery() {
           buffer += e.data;
         }
         setAnswer(buffer);
+      });
+
+      es.addEventListener("meta", (e) => {
+        try {
+          setMeta(JSON.parse(e.data) as AnswerMeta);
+        } catch {}
       });
 
       es.addEventListener("done", () => {
@@ -152,5 +196,5 @@ export function useRagQuery() {
     setIsStreaming(false);
   }, []);
 
-  return { query, answer, chunks, isStreaming, cancel };
+  return { query, answer, chunks, isStreaming, meta, cancel };
 }
