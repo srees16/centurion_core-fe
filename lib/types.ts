@@ -702,6 +702,8 @@ export interface RAGChunk {
   content: string;
   source: string;
   score: number;
+  page?: number | null;
+  chunk_index?: number;
 }
 
 export interface RAGSource {

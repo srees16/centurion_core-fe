@@ -121,13 +121,23 @@ export function StreamingAnswer({ answer, chunks, isStreaming }: StreamingAnswer
       {/* Source Chunks (Citations) */}
       {chunks.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs font-semibold text-muted-foreground">Sources ({chunks.length})</p>
+          <p className="text-xs font-semibold text-muted-foreground">
+            Sources used ({chunks.length} passages):{" "}
+            <span className="font-normal">
+              {Object.entries(
+                chunks.reduce<Record<string, number>>((n, c) => ({ ...n, [c.source]: (n[c.source] ?? 0) + 1 }), {}),
+              )
+                .map(([src, n]) => `${src} (${n})`)
+                .join(", ")}
+            </span>
+          </p>
           <div className="grid gap-2">
             {chunks.map((chunk, i) => (
               <div key={i} className="text-xs rounded border p-2 bg-muted/30">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant="outline" className="text-[10px]">
                     [{i + 1}] {chunk.source}
+                    {chunk.page != null ? ` · p. ${chunk.page}` : ""}
                   </Badge>
                   {chunk.score !== undefined && (
                     <span className="text-[10px] text-muted-foreground">
