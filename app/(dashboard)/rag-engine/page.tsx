@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useRagSources, useRagQuery, useRagModels } from "@/hooks/use-rag";
 import type { AnswerMeta, RagModel } from "@/hooks/use-rag";
-import { MessageSquare, Loader2, Bot } from "lucide-react";
+import { MessageSquare, Loader2, Bot, Library } from "lucide-react";
 
 /** The model's price, dollars per million input / output tokens. */
 function price(m: RagModel): string {
@@ -47,8 +47,19 @@ export default function RagEnginePage() {
   const [model, setModel] = useState<string>("");
   const chosen = model || modelsQ.data?.default || "";
 
+  // Every source ticked is the same search as none ticked: send none, so both share the cache (RAG3).
+  const scoped = selectedSources.length > 0 && selectedSources.length < sources.length ? selectedSources : [];
+  const nameOf = (id: string) => sources.find((s) => s.id === id)?.name ?? id;
+  const contextLabel = !ragEnabled
+    ? "none (RAG off: the model answers from its own knowledge)"
+    : scoped.length === 0
+      ? `all sources${sources.length ? ` (${sources.length})` : ""}`
+      : scoped.map(nameOf).join(", ");
+  const [askedWith, setAskedWith] = useState<string | null>(null);
+
   const handleQuery = (q: string) => {
-    query(q, ragEnabled, selectedSources.length > 0 ? selectedSources : undefined, chosen || undefined);
+    setAskedWith(contextLabel);
+    query(q, ragEnabled, scoped.length > 0 ? scoped : undefined, chosen || undefined);
   };
 
   const toggleSource = (id: string, checked: boolean) => {
@@ -111,7 +122,16 @@ export default function RagEnginePage() {
             <div className="md:col-span-3 space-y-4">
               <div className="content-panel p-4">
                 <QueryInput onSubmit={handleQuery} isLoading={isStreaming} />
+                <p className="mt-2 text-xs text-muted-foreground flex items-start gap-1.5">
+                  <Library className="h-3.5 w-3.5 mt-px shrink-0" />
+                  <span>
+                    Context: <span className="font-medium text-foreground">{contextLabel}</span>
+                  </span>
+                </p>
               </div>
+              {askedWith !== null && (answer || isStreaming) && askedWith !== contextLabel && (
+                <p className="text-xs text-muted-foreground">This answer searched: {askedWith}</p>
+              )}
               <StreamingAnswer answer={answer} chunks={chunks} isStreaming={isStreaming} />
               {meta && !isStreaming && answeredBy(meta, models) && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
