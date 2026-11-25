@@ -71,6 +71,7 @@ function MultiLegTable({ orders }: { orders: MultiLegOrder[] }) {
           <th className="py-1 px-2 text-right">Net Credit</th>
           <th className="py-1 px-2 text-right">Max Loss</th>
           <th className="py-1 px-2 text-right">PoP</th>
+          <th className="py-1 px-2 text-right" title="Chance a short strike is reached at a daily close before expiry (an upper bound). Early exits act on touches, about twice as likely as finishing beyond.">Touch</th>
           <th className="py-1 px-2 text-right">Margin</th>
         </tr>
       </thead>
@@ -90,6 +91,7 @@ function MultiLegTable({ orders }: { orders: MultiLegOrder[] }) {
             <td className="py-1 px-2 text-right font-mono text-green-500">₹{o.net_credit.toLocaleString()}</td>
             <td className="py-1 px-2 text-right font-mono text-red-500">₹{o.max_loss.toLocaleString()}</td>
             <td className="py-1 px-2 text-right">{o.pop.toFixed(1)}%</td>
+            <td className="py-1 px-2 text-right">{o.touch_pct != null ? `${o.touch_pct.toFixed(1)}%` : "–"}</td>
             <td className="py-1 px-2 text-right font-mono">₹{o.margin_required.toLocaleString()}</td>
           </tr>
         ))}
