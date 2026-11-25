@@ -668,6 +668,8 @@ export interface MultiLegOrder {
   max_loss: number;
   max_profit: number;
   pop: number;
+  /** Chance a short strike is reached at a daily close before expiry (upper bound); absent from older backends. */
+  touch_pct?: number;
   margin_required: number;
   iv_rank: number;
 }
