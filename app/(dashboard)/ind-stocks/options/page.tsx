@@ -292,6 +292,9 @@ export default function INDOptionsPage() {
                     <Badge variant="outline">{scan.iron_condors.length}</Badge>
                   </h4>
                   <MultiLegTable orders={scan.iron_condors} />
+                  {scan.measured_odds && (
+                    <p className="text-xs text-muted-foreground mt-3">{scan.measured_odds}</p>
+                  )}
                 </div>
 
                 {/* Log */}
