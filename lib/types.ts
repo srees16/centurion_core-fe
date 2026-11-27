@@ -689,6 +689,8 @@ export interface OverlayScanResult {
     csp_count: number;
     iron_condor_count: number;
   };
+  /** How the condor odds compared with NIFTY's history (odds_calibration.MEASURED_CONDOR). */
+  measured_odds?: string;
   log: string[];
 }
 
