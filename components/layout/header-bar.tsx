@@ -15,11 +15,11 @@ export function HeaderBar({ subtitle, rightContent }: HeaderBarProps) {
   return (
     <div className="header-bar">
       <div className="min-w-0 flex-1 pl-10 lg:pl-0">
-        <h1 className="text-white text-lg lg:text-[1.55rem] font-extrabold tracking-tight leading-tight m-0 truncate">
+        <h1 className="text-foreground text-base lg:text-lg font-semibold tracking-tight leading-tight m-0 truncate">
           Centurion Capital LLC
         </h1>
         {subtitle && (
-          <p className="text-[#8b949e] text-[0.72rem] tracking-wider uppercase font-medium mt-0.5 m-0">
+          <p className="text-muted-foreground text-[0.72rem] tracking-wider uppercase font-medium mt-0.5 m-0">
             {subtitle}
           </p>
         )}
