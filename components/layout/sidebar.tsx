@@ -93,7 +93,7 @@ export function Sidebar() {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors",
                   stockTab === "us-stocks"
-                    ? "text-primary bg-sidebar-active shadow-xs font-semibold"
+                    ? "text-sidebar-active-foreground bg-sidebar-active font-semibold"
                     : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
@@ -105,7 +105,7 @@ export function Sidebar() {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-l border-sidebar-border",
                   stockTab === "ind-stocks"
-                    ? "text-primary bg-sidebar-active shadow-xs font-semibold"
+                    ? "text-sidebar-active-foreground bg-sidebar-active font-semibold"
                     : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
@@ -123,7 +123,7 @@ export function Sidebar() {
                   className={cn(
                     "block px-3 py-1.5 text-[0.8125rem] rounded-md transition-colors",
                     pathname === sp.href
-                      ? "text-primary bg-sidebar-active font-semibold shadow-xs"
+                      ? "text-sidebar-active-foreground bg-sidebar-active font-semibold shadow-[inset_3px_0_0_hsl(var(--brand-cyan))]"
                       : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >
@@ -144,7 +144,7 @@ export function Sidebar() {
                     href={mod.href}
                     className={cn(
                       "flex items-center justify-center px-4 py-2 transition-colors text-sm",
-                      isActive ? "text-primary bg-sidebar-active font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      isActive ? "text-sidebar-active-foreground bg-sidebar-active font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                   >
                     {MODULE_ICONS[key]}
@@ -166,7 +166,7 @@ export function Sidebar() {
               <div
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 cursor-pointer transition-colors text-sm",
-                  isActive ? "text-primary bg-sidebar-active font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  isActive ? "text-sidebar-active-foreground bg-sidebar-active font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
                 onClick={() => subPages.length ? toggleModule(mod.key) : undefined}
               >
@@ -196,7 +196,7 @@ export function Sidebar() {
                       className={cn(
                         "block px-3 py-1.5 text-[0.8125rem] rounded-md transition-colors",
                         pathname === sp.href
-                          ? "text-primary bg-sidebar-active font-semibold shadow-xs"
+                          ? "text-sidebar-active-foreground bg-sidebar-active font-semibold shadow-[inset_3px_0_0_hsl(var(--brand-cyan))]"
                           : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
                     >
