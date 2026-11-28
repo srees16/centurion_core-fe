@@ -42,12 +42,22 @@ module.exports = {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
         },
-        // Trading-specific colors
-        "trade-green": "#00cc44",
-        "trade-green-light": "#66ff99",
-        "trade-yellow": "#ffcc00",
-        "trade-orange": "#ff9933",
-        "trade-red": "#ff3333",
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          muted: "hsl(var(--sidebar-muted))",
+          border: "hsl(var(--sidebar-border))",
+          accent: "hsl(var(--sidebar-accent))",
+        },
+        // Trading-specific colors (calmer since UX1; light and dark values in styles/globals.css)
+        "trade-green": "hsl(var(--trade-green))",
+        "trade-green-light": "hsl(var(--trade-green-light))",
+        "trade-yellow": "hsl(var(--trade-yellow))",
+        "trade-orange": "hsl(var(--trade-orange))",
+        "trade-red": "hsl(var(--trade-red))",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

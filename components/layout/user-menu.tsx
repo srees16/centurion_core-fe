@@ -40,11 +40,11 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/10 transition-colors outline-hidden">
-          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+        <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent transition-colors outline-hidden focus-visible:ring-2 focus-visible:ring-ring">
+          <div className="h-8 w-8 rounded-full bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
             {initials}
           </div>
-          <span className="hidden sm:block text-sm font-medium text-white">{user.username}</span>
+          <span className="hidden sm:block text-sm font-medium text-foreground">{user.username}</span>
         </button>
       </DropdownMenuTrigger>
 
