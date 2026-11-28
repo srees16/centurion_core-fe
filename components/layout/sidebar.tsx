@@ -7,7 +7,7 @@ import { APP_MODULES, US_SUB_PAGES, IND_SUB_PAGES, type SubPage } from "@/lib/co
 import { useAuthStore } from "@/hooks/use-auth";
 import {
   BarChart3, Globe, Bitcoin, MessageSquare,
-  ChevronDown, ChevronRight, Menu, X, Bot,
+  ChevronDown, ChevronRight, Menu, X, Bot, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -75,11 +75,11 @@ export function Sidebar() {
   const navContent = (
     <nav className="flex flex-col h-full">
       {/* Logo / Brand */}
-      <div className="px-4 py-4 border-b border-gray-700/50">
-        <h2 className={cn("font-bold text-white transition-all", collapsed ? "text-sm text-center" : "text-lg")}>
+      <div className="px-4 h-14 flex flex-col justify-center border-b border-sidebar-border">
+        <h2 className={cn("font-semibold tracking-tight text-sidebar-foreground transition-all", collapsed ? "text-sm text-center" : "text-base")}>
           {collapsed ? "CC" : "Centurion Capital"}
         </h2>
-        {!collapsed && <p className="text-[0.65rem] text-gray-400 tracking-wider uppercase">Trading Platform</p>}
+        {!collapsed && <p className="text-[0.65rem] text-sidebar-muted tracking-wider uppercase">Trading Platform</p>}
       </div>
 
       {/* Module Links */}
@@ -87,14 +87,14 @@ export function Sidebar() {
         {/* ── Stock Market Tabs (US / IND side by side) ── */}
         {!collapsed ? (
           <div className="mb-1">
-            <div className="flex mx-2 rounded-md overflow-hidden border border-gray-700/50">
+            <div className="flex mx-2 mt-1 rounded-md overflow-hidden border border-sidebar-border bg-sidebar-accent/60">
               <button
                 onClick={() => setStockTab("us-stocks")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors",
                   stockTab === "us-stocks"
-                    ? "text-[#58a6ff] bg-[#58a6ff]/10"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "text-primary bg-sidebar shadow-xs font-semibold"
+                    : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
                 {MODULE_ICONS["us-stocks"]}
@@ -103,10 +103,10 @@ export function Sidebar() {
               <button
                 onClick={() => setStockTab("ind-stocks")}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-l border-gray-700/50",
+                  "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-l border-sidebar-border",
                   stockTab === "ind-stocks"
-                    ? "text-[#58a6ff] bg-[#58a6ff]/10"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "text-primary bg-sidebar shadow-xs font-semibold"
+                    : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
                 {MODULE_ICONS["ind-stocks"]}
@@ -114,17 +114,17 @@ export function Sidebar() {
               </button>
             </div>
             {/* Sub-pages of active stock tab */}
-            <div className="ml-6 border-l border-gray-700/50 pl-2 mt-1">
+            <div className="ml-6 border-l border-sidebar-border pl-2 mt-1">
               {stockSubPages.map((sp) => (
                 <Link
                   key={sp.key}
                   href={sp.href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "block px-3 py-1.5 text-xs rounded-md transition-colors",
+                    "block px-3 py-1.5 text-[0.8125rem] rounded-md transition-colors",
                     pathname === sp.href
-                      ? "text-[#58a6ff] bg-[#58a6ff]/10 font-medium"
-                      : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                      ? "text-primary bg-primary/10 font-medium"
+                      : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >
                   {sp.label}
@@ -144,7 +144,7 @@ export function Sidebar() {
                     href={mod.href}
                     className={cn(
                       "flex items-center justify-center px-4 py-2 transition-colors text-sm",
-                      isActive ? "text-[#58a6ff] bg-white/5" : "text-gray-400 hover:text-white hover:bg-white/5"
+                      isActive ? "text-primary bg-primary/10" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                   >
                     {MODULE_ICONS[key]}
@@ -166,7 +166,7 @@ export function Sidebar() {
               <div
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 cursor-pointer transition-colors text-sm",
-                  isActive ? "text-[#58a6ff] bg-white/5" : "text-gray-400 hover:text-white hover:bg-white/5"
+                  isActive ? "text-primary bg-primary/10" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
                 onClick={() => subPages.length ? toggleModule(mod.key) : undefined}
               >
@@ -187,17 +187,17 @@ export function Sidebar() {
 
               {/* Sub-pages */}
               {!collapsed && isExpanded && subPages.length > 0 && (
-                <div className="ml-6 border-l border-gray-700/50 pl-2">
+                <div className="ml-6 border-l border-sidebar-border pl-2">
                   {subPages.map((sp) => (
                     <Link
                       key={sp.key}
                       href={sp.href}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        "block px-3 py-1.5 text-xs rounded-md transition-colors",
+                        "block px-3 py-1.5 text-[0.8125rem] rounded-md transition-colors",
                         pathname === sp.href
-                          ? "text-[#58a6ff] bg-[#58a6ff]/10 font-medium"
-                          : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                          ? "text-primary bg-primary/10 font-medium"
+                          : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
                     >
                       {sp.label}
@@ -211,12 +211,13 @@ export function Sidebar() {
       </div>
 
       {/* Collapse toggle */}
-      <div className="border-t border-gray-700/50 p-2 hidden lg:block">
+      <div className="border-t border-sidebar-border p-2 hidden lg:block">
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="w-full text-xs text-gray-500 hover:text-gray-300 py-1"
+          className="w-full flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? "→" : "← Collapse"}
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <><PanelLeftClose className="h-4 w-4" /> Collapse</>}
         </button>
       </div>
     </nav>
@@ -226,7 +227,7 @@ export function Sidebar() {
     <>
       {/* Mobile toggle */}
       <button
-        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-md bg-gray-800 text-white shadow-lg"
+        className="lg:hidden fixed top-2.5 left-3 z-50 p-2 rounded-md border bg-card text-foreground shadow-sm"
         onClick={() => setMobileOpen((o) => !o)}
         aria-label="Toggle sidebar"
       >

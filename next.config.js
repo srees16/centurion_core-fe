@@ -2,6 +2,8 @@
 const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  // next dev writes an AGENTS.md into the repo on every run by default; the repo does not want one (UX1)
+  agentRules: false,
   // The app uses no next/image; turning the optimizer off removes the
   // /_next/image endpoint and the advisories fixed only in Next 15.5+.
   images: { unoptimized: true },

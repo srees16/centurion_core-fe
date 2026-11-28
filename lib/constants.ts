@@ -1,30 +1,31 @@
 // ─── Color Maps (from ui/styles.py) ───────────────────────────────────────
+// Calmer since UX1 (28 Nov 2026), same meaning; styles/globals.css .badge-* use the same five
 export const DECISION_COLORS: Record<string, string> = {
-  STRONG_BUY: "#00cc44",
-  BUY: "#66ff99",
-  HOLD: "#ffcc00",
-  SELL: "#ff9933",
-  STRONG_SELL: "#ff3333",
+  STRONG_BUY: "#15803d",
+  BUY: "#4ade80",
+  HOLD: "#fbbf24",
+  SELL: "#c2410c",
+  STRONG_SELL: "#b91c1c",
 };
 
 export const SENTIMENT_COLORS: Record<string, string> = {
-  POSITIVE: "#00cc44",
-  positive: "#00cc44",
-  NEUTRAL: "#ffcc00",
-  neutral: "#ffcc00",
-  NEGATIVE: "#ff3333",
-  negative: "#ff3333",
+  POSITIVE: "#15803d",
+  positive: "#15803d",
+  NEUTRAL: "#d97706",
+  neutral: "#d97706",
+  NEGATIVE: "#dc2626",
+  negative: "#dc2626",
 };
 
 export const HEALTH_COLORS: Record<string, string> = {
-  Safe: "#00cc44",
-  Strong: "#00cc44",
-  "Grey Zone": "#ffcc00",
-  Moderate: "#ffcc00",
-  Distress: "#ff3333",
-  Weak: "#ff3333",
-  "Likely Manipulator": "#ff3333",
-  Unlikely: "#00cc44",
+  Safe: "#15803d",
+  Strong: "#15803d",
+  "Grey Zone": "#d97706",
+  Moderate: "#d97706",
+  Distress: "#dc2626",
+  Weak: "#dc2626",
+  "Likely Manipulator": "#dc2626",
+  Unlikely: "#15803d",
 };
 
 // ─── VIX Thresholds ──────────────────────────────────────────────────────
