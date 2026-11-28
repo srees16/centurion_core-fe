@@ -75,7 +75,7 @@ export function Sidebar() {
   const navContent = (
     <nav className="flex flex-col h-full">
       {/* Logo / Brand */}
-      <div className="px-4 h-14 flex flex-col justify-center border-b border-sidebar-border">
+      <div className="px-4 h-14 flex flex-col justify-center border-b border-sidebar-border bg-header">
         <h2 className={cn("font-semibold tracking-tight text-sidebar-foreground transition-all", collapsed ? "text-sm text-center" : "text-base")}>
           {collapsed ? "CC" : "Centurion Capital"}
         </h2>
@@ -87,13 +87,13 @@ export function Sidebar() {
         {/* ── Stock Market Tabs (US / IND side by side) ── */}
         {!collapsed ? (
           <div className="mb-1">
-            <div className="flex mx-2 mt-1 rounded-md overflow-hidden border border-sidebar-border bg-sidebar-accent/60">
+            <div className="flex mx-2 mt-2 rounded-md overflow-hidden border border-sidebar-border bg-sidebar-accent">
               <button
                 onClick={() => setStockTab("us-stocks")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors",
                   stockTab === "us-stocks"
-                    ? "text-primary bg-sidebar shadow-xs font-semibold"
+                    ? "text-primary bg-sidebar-active shadow-xs font-semibold"
                     : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
@@ -105,7 +105,7 @@ export function Sidebar() {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-l border-sidebar-border",
                   stockTab === "ind-stocks"
-                    ? "text-primary bg-sidebar shadow-xs font-semibold"
+                    ? "text-primary bg-sidebar-active shadow-xs font-semibold"
                     : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
@@ -123,7 +123,7 @@ export function Sidebar() {
                   className={cn(
                     "block px-3 py-1.5 text-[0.8125rem] rounded-md transition-colors",
                     pathname === sp.href
-                      ? "text-primary bg-primary/10 font-medium"
+                      ? "text-primary bg-sidebar-active font-semibold shadow-xs"
                       : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >
@@ -144,7 +144,7 @@ export function Sidebar() {
                     href={mod.href}
                     className={cn(
                       "flex items-center justify-center px-4 py-2 transition-colors text-sm",
-                      isActive ? "text-primary bg-primary/10" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      isActive ? "text-primary bg-sidebar-active font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                     )}
                   >
                     {MODULE_ICONS[key]}
@@ -166,7 +166,7 @@ export function Sidebar() {
               <div
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 cursor-pointer transition-colors text-sm",
-                  isActive ? "text-primary bg-primary/10" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  isActive ? "text-primary bg-sidebar-active font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
                 onClick={() => subPages.length ? toggleModule(mod.key) : undefined}
               >
@@ -196,7 +196,7 @@ export function Sidebar() {
                       className={cn(
                         "block px-3 py-1.5 text-[0.8125rem] rounded-md transition-colors",
                         pathname === sp.href
-                          ? "text-primary bg-primary/10 font-medium"
+                          ? "text-primary bg-sidebar-active font-semibold shadow-xs"
                           : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
                       )}
                     >

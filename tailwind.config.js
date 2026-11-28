@@ -41,6 +41,7 @@ module.exports = {
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
+          border: "hsl(var(--popover-border))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar))",
@@ -48,6 +49,12 @@ module.exports = {
           muted: "hsl(var(--sidebar-muted))",
           border: "hsl(var(--sidebar-border))",
           accent: "hsl(var(--sidebar-accent))",
+          active: "hsl(var(--sidebar-active))",
+        },
+        header: "hsl(var(--header))",
+        tab: {
+          track: "hsl(var(--tab-track))",
+          active: "hsl(var(--tab-active))",
         },
         // Trading-specific colors (calmer since UX1; light and dark values in styles/globals.css)
         "trade-green": "hsl(var(--trade-green))",
